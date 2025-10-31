@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>aiVisa — автоматизация подачи виз для хадж и умра (5 минут вместо 60)</title>
+  <meta name="description" content="Казахстанская платформа автоматизации подачи виз в Саудовскую Аравию для хадж и умра компаний. Загрузите паспорта и нажмите кнопку — остальное система сделает сама.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --primary:#7C4DFF;--primary-light:#C9B8FF;--primary-dark:#5E35B1;
+      --gradient:linear-gradient(135deg,#7C4DFF 0%,#C9B8FF 100%);
+      --text-dark:#0F172A;--text-light:#64748B;--white:#FFFFFF;--light-bg:#F8FAFC;--border:#E2E8F0;
+      --shadow:0 10px 25px rgba(0,0,0,.05);--shadow-lg:0 20px 40px rgba(124,77,255,.15);
+      --radius:12px;--radius-lg:20px
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;color:var(--text-dark);line-height:1.6;overflow-x:hidden;background:var(--white)}
+    .container{width:90%;max-width:1200px;margin:0 auto;padding:0 20px}
+    section{padding:100px 0}
+    .section-title{font-size:2.5rem;font-weight:800;text-align:center;margin-bottom:20px;line-height:1.2}
+    .section-subtitle{font-size:1.1rem;color:var(--text-light);text-align:center;max-width:700px;margin:0 auto 60px}
+
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:16px 32px;border-radius:var(--radius);font-weight:600;text-decoration:none;transition:.3s;border:none;font-size:1rem;cursor:pointer}
+    .btn-primary{background:var(--gradient);color:#fff;box-shadow:var(--shadow-lg)}
+    .btn-primary:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(124,77,255,.25)}
+    .btn-secondary{background:transparent;color:var(--primary);border:2px solid var(--primary)}
+    .btn-secondary:hover{background:rgba(124,77,255,.05)}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(124,77,255,.1);color:var(--primary);border-radius:50px;font-size:.875rem;font-weight:600}
+
+    /* === Стильные кнопки доступа (PRO) === */
+    .btn-pro{
+      position:relative; overflow:hidden; border:none;
+      border-radius:var(--radius); padding:16px 34px; font-weight:700; letter-spacing:.2px;
+      color:#fff;
+      background:linear-gradient(135deg,#7C4DFF 0%, #9D7BFF 50%, #7C4DFF 100%);
+      background-size:200% 100%;
+      box-shadow:0 10px 24px rgba(124,77,255,.30), inset 0 0 0 1px rgba(255,255,255,.15);
+      transform:translateZ(0);
+      transition:background-position .5s ease, transform .2s ease, box-shadow .25s ease, filter .25s ease;
+      will-change:transform,box-shadow,background-position,filter;
+    }
+    .btn-pro:hover{
+      background-position:100% 0; transform:translateY(-3px);
+      box-shadow:0 16px 32px rgba(124,77,255,.36); filter:saturate(1.08);
+    }
+    .btn-pro:active{ transform:translateY(-1px) scale(.99); box-shadow:0 10px 24px rgba(124,77,255,.28) }
+    .btn-pro:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(124,77,255,.18), 0 14px 30px rgba(124,77,255,.34) }
+    /* Блик */
+    .btn-pro::before{
+      content:""; position:absolute; inset:-120% -40%;
+      background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+      transform:translateX(-60%) rotate(12deg); transition:transform .6s ease; pointer-events:none;
+    }
+    .btn-pro:hover::before{ transform:translateX(30%) rotate(12deg) }
+    /* Стрелка */
+    .btn-pro .arrow{ width:18px; height:18px; flex:0 0 18px; transition:transform .25s ease, opacity .25s ease; transform:translateX(0) }
+    .btn-pro:hover .arrow{ transform:translateX(6px) }
+    /* Свечение по желанию */
+    @keyframes btnGlow{ 0%,100%{box-shadow:0 10px 24px rgba(124,77,255,.30)} 50%{box-shadow:0 12px 28px rgba(124,77,255,.38)} }
+    .btn-pro.glow{ animation:btnGlow 2.4s ease-in-out infinite }
+    /* Ripple */
+    .btn-pro .ripple{
+      position:absolute; border-radius:50%; transform:scale(0);
+      background:rgba(255,255,255,.35); pointer-events:none; animation:ripple .6s ease-out forwards;
+    }
+    @keyframes ripple{ to{ transform:scale(12); opacity:0 } }
+
+    /* Header */
+    header{position:fixed;top:0;left:0;width:100%;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,.05);z-index:1000;transition:.3s}
+    .header-container{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+    .logo{display:flex;align-items:center;gap:12px;font-size:1.5rem;font-weight:800;color:var(--text-dark);text-decoration:none}
+    .logo-icon{width:36px;height:36px;background:var(--gradient);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .logo-icon img{width:40px}
+    .nav-menu{display:flex;list-style:none;gap:30px;align-items:center}
+    .nav-menu a{text-decoration:none;color:var(--text-dark);font-weight:500;transition:color .3s;position:relative}
+    .nav-menu a:hover{color:var(--primary)}
+    .nav-menu a::after{content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;background:var(--gradient);transition:width .3s}
+    .nav-menu a:hover::after{width:100%}
+    /* burger */
+    .mobile-menu-btn{display:none;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-dark);width:44px;height:44px;border-radius:10px;position:relative}
+    .mobile-menu-btn:focus-visible{outline:3px solid rgba(124,77,255,.35)}
+    .mobile-menu-btn .bar,.mobile-menu-btn .bar:before,.mobile-menu-btn .bar:after{
+      position:absolute;left:10px;right:10px;height:2px;background:var(--text-dark);content:'';transition:.25s;border-radius:2px
+    }
+    .mobile-menu-btn .bar{top:21px}
+    .mobile-menu-btn .bar:before{top:-8px}
+    .mobile-menu-btn .bar:after{top:8px}
+    .mobile-menu-btn.active .bar{background:transparent}
+    .mobile-menu-btn.active .bar:before{transform:translateY(8px) rotate(45deg)}
+    .mobile-menu-btn.active .bar:after{transform:translateY(-8px) rotate(-45deg)}
+    /* mobile dropdown panel */
+    .nav-menu.mobile{display:none;position:absolute;top:80px;left:0;width:100%;background:#fff;flex-direction:column;padding:20px 16px 24px;border-top:1px solid var(--border);box-shadow:0 10px 20px rgba(0,0,0,.1);gap:0}
+    .nav-menu.mobile li{margin:6px 0}
+    .nav-cta{margin-top:10px}
+
+    /* Hero */
+    .hero{padding-top:160px;padding-bottom:100px;background:linear-gradient(135deg,#F8FAFF 0%,#F0F4FF 100%);position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-50%;right:-10%;width:600px;height:600px;background:var(--gradient);border-radius:50%;opacity:.05;z-index:0}
+    .hero-container{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+    .hero-content{flex:1;max-width:600px}
+    .hero-badge{margin-bottom:20px}
+    .hero-title{font-size:3.5rem;font-weight:800;line-height:1.1;margin-bottom:24px}
+    .hero-subtitle{font-size:1.25rem;color:var(--text-light);margin-bottom:40px}
+    .hero-buttons{display:flex;gap:16px;flex-wrap:wrap}
+    .hero-visual{flex:1;display:flex;justify-content:flex-end;position:relative}
+    .hero-card{width:100%;max-width:500px;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);overflow:hidden;transform:perspective(1000px) rotateY(-5deg) rotateX(5deg);transition:.5s}
+    .hero-card:hover{transform:perspective(1000px) rotateY(0) rotateX(0)}
+    .card-header{height:50px;background:var(--gradient);display:flex;align-items:center;padding:0 20px}
+    .card-content{padding:24px}
+
+    .passport-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    .passport-card{height:90px;background:var(--light-bg);border-radius:var(--radius);display:flex;align-items:center;padding:0 16px;border:1px dashed var(--border);transition:.3s}
+    .passport-card:hover{border-color:var(--primary);transform:translateY(-3px)}
+    .passport-icon{width:36px;height:36px;background:var(--primary);border-radius:8px;margin-right:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+    .passport-info{flex:1}
+    .passport-name{font-weight:600;margin-bottom:3px;font-size:.98rem}
+    .passport-details{font-size:.85rem;color:var(--text-light)}
+
+    /* How it works */
+    .how-it-works{background:#fff}
+    .steps-container{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
+    .step-card{text-align:center;padding:36px 28px;border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow);transition:.3s;position:relative;overflow:hidden}
+    .step-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:var(--gradient)}
+    .step-card:hover{transform:translateY(-10px);box-shadow:var(--shadow-lg)}
+    .step-icon{width:72px;height:72px;margin:0 auto 20px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;box-shadow:0 10px 20px rgba(124,77,255,.2)}
+    .step-title{font-size:1.35rem;font-weight:700;margin-bottom:12px}
+    .step-description{color:var(--text-light)}
+    .comparison-badge{display:flex;justify-content:center;align-items:center;margin-top:40px;padding:16px 28px;background:var(--light-bg);border-radius:var(--radius);font-weight:700;max-width:500px;margin-left:auto;margin-right:auto}
+    .comparison-before{color:var(--text-light);text-decoration:line-through;margin-right:16px}
+    .comparison-arrow{margin:0 16px;color:var(--primary);font-size:1.3rem}
+    .comparison-after{color:var(--primary)}
+
+    /* Benefits (accordion for all viewports) */
+    .benefits{background:var(--light-bg)}
+    .benefits-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+    .benefit{background:#fff;border-radius:16px;box-shadow:var(--shadow);transition:.25s;overflow:hidden}
+    .benefit:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+    .benefit .acc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 16px;font-weight:700;cursor:pointer}
+    .benefit .acc-header .title{display:flex;align-items:center;gap:8px;font-size:1.05rem}
+    .benefit .acc-body{padding:0 18px 0 34px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;color:var(--text-light)}
+    .benefit.active .acc-body{padding:0 18px 16px 34px;max-height:300px}
+    .benefit .dot{width:10px;height:10px;border-radius:50%;background:var(--primary);display:inline-block;margin-right:8px;vertical-align:middle}
+    .chev{transition:transform .25s;color:var(--primary)}
+    .benefit.active .chev{transform:rotate(180deg)}
+
+    /* Clients marquee (коротко) */
+    .client-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;background:#fff;box-shadow:var(--shadow)}
+    .client-logo img{height:94px;width:auto;object-fit:contain;border-radius:8px}
+    .logos-track{display:flex;align-items:center;gap:100px;will-change:transform;padding:10px 0;animation:marquee var(--marquee-duration,20s) linear infinite}
+    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(calc(-1 * var(--marquee-distance,50%)))}}
+
+    /* Demo */
+    .demo{background:var(--light-bg)}
+    .demo-container{display:flex;align-items:center;justify-content:space-between;gap:60px}
+    .demo-content{flex:1;max-width:500px}
+    .demo-title{font-size:2.25rem;font-weight:800;margin-bottom:20px}
+    .demo-description{color:var(--text-light);margin-bottom:30px}
+    .demo-visual{flex:1;display:flex;justify-content:center}
+    .video-placeholder{width:100%;max-width:550px;height:350px;background:var(--text-dark);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.25rem;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+    .video-placeholder::before{content:'';position:absolute;inset:0;background:var(--gradient);opacity:.7}
+    .video-placeholder::after{content:'▶';position:absolute;font-size:3rem;color:#fff}
+
+    /* Security (accordion for all viewports) */
+    .security{background:#fff}
+    .security-points{max-width:800px;margin:0 auto}
+    .security-point{margin-bottom:18px;border-radius:var(--radius-lg);box-shadow:var(--shadow);transition:.3s;background:#fff;overflow:hidden}
+    .security-point:hover{box-shadow:var(--shadow-lg)}
+    .security-point .acc-row{display:flex;align-items:center;gap:14px;padding:18px;cursor:pointer}
+    .security-point .acc-body{padding:0 18px 0 18px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;color:var(--text-light)}
+    .security-point.active .acc-body{padding:0 18px 18px 18px;max-height:300px}
+    .security-icon{width:56px;height:56px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:1.4rem}
+    .security-content h3{font-size:1.3rem;font-weight:700;margin:0}
+    .security-point .chev{margin-left:auto}
+
+    /* FAQ */
+    .faq{background:var(--light-bg)}
+    .faq-container{max-width:800px;margin:0 auto}
+    .faq-item{margin-bottom:16px;border-radius:var(--radius);overflow:hidden;background:#fff;box-shadow:var(--shadow);transition:.3с}
+    .faq-item:hover{box-shadow:var(--shadow-lg)}
+    .faq-question{padding:24px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:1.05rem}
+    .faq-answer{padding:0 24px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;color:var(--text-light)}
+    .faq-item.active .faq-answer{padding:0 24px 24px;max-height:500px}
+    .faq-toggle{transition:transform .3s ease;color:var(--primary)}
+    .faq-item.active .faq-toggle{transform:rotate(180deg)}
+
+    /* CTA */
+    .cta-strip{background:var(--gradient);color:#fff;text-align:center;padding:80px 0}
+    .cta-strip h2{font-size:2.5rem;font-weight:800;margin-bottom:20px}
+    .cta-strip p{font-size:1.25rem;margin-bottom:30px;opacity:.9}
+
+    /* Form */
+    .form-section{background:#fff}
+    .form-container{max-width:700px;margin:0 auto;background:var(--light-bg);padding:40px;border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+    .form-title{font-size:2rem;font-weight:800;text-align:center;margin-bottom:28px}
+    .form-group{margin-bottom:16px}
+    .form-label{display:block;margin-bottom:8px;font-weight:600}
+    .form-control{width:100%;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:1rem;transition:.3s}
+    .form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,77,255,.1)}
+    .form-submit{width:100%;padding:16px;background:var(--gradient);color:#fff;border:none;border-radius:var(--radius);font-weight:700;font-size:1.05rem;cursor:pointer;transition:.3s;box-shadow:var(--shadow-lg);margin-top:8px}
+    .form-submit:hover{transform:translateY(-2px);box-shadow:0 15px 30px rgba(124,77,255,.25)}
+    .form-success{display:none;text-align:center;padding:40px 20px}
+    .form-success h3{font-size:1.6rem;font-weight:800;margin-bottom:12px;color:var(--primary)}
+    .form-success p{color:var(--text-light)}
+
+    /* WhatsApp Floating */
+    .whatsapp-float{
+      position:fixed; right:24px; bottom:24px;
+      width:64px; height:64px; border-radius:50%;
+      background:#25D366; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 8px 24px rgba(37,211,102,.35);
+      text-decoration:none; z-index:1000; transition:transform .2s, box-shadow .2s;
+    }
+    .whatsapp-float:hover{ transform:scale(1.06); box-shadow:0 10px 28px rgba(37,211,102,.45) }
+    .whatsapp-float::after{
+      content:""; position:absolute; inset:-8px; border-radius:50%; border:2px solid rgba(37,211,102,.35);
+      opacity:.0; transform:scale(.8); pointer-events:none; animation:waPulse 2.2s ease-out infinite;
+    }
+    @keyframes waPulse{ 0%{opacity:.35; transform:scale(.8)} 70%,100%{opacity:0; transform:scale(1.25)} }
+    .whatsapp-float svg{ width:30px; height:30px; display:block }
+    @media (max-width:640px){ .whatsapp-float{ right:16px; bottom:16px; width:56px; height:56px } }
+
+    /* Animations */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{opacity:0;animation:fadeInUp .6s ease forwards}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}
+
+    /* Responsive tweaks */
+    @media (max-width:1100px){
+      .hero-title{font-size:3rem}
+      .steps-container{grid-template-columns:repeat(2,1fr)}
+      .benefits-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (max-width:900px){
+      .hero-container,.demo-container{flex-direction:column}
+      .hero-content,.demo-content{max-width:100%;text-align:center;margin-bottom:48px}
+      .hero-visual{justify-content:center}
+    }
+    @media (max-width:768px){
+      .section-title{font-size:2rem}
+      .hero-title{font-size:2.5rem}
+      .nav-menu{display:none}
+      .mobile-menu-btn{display:block}
+      .nav-menu.mobile.active{display:flex}
+      .passport-grid{gap:10px}
+      .passport-card{height:72px;padding:0 12px}
+      .passport-icon{width:30px;height:30px;font-size:16px;margin-right:10px}
+      .passport-name{font-size:.92rem}
+      .passport-details{font-size:.8rem}
+      .steps-container{grid-template-columns:1fr}
+      .form-container{padding:28px 20px}
+      .benefits-grid{grid-template-columns:1fr;gap:12px}
+    }
+
+    /* Clients wrap helpers */
+    .logos-wrap{overflow:hidden;position:relative}
+    .client-logo{flex:0 0 auto}
+    @media (max-width:600px){.logos-track{gap:28px;padding:6px 0}.client-logo{padding:6px 10px;border-radius:10px}.client-logo img{height:56px}}
+    @media (max-width:380px){.logos-track{gap:20px}.client-logo img{height:38px}}
+
+    .clients-sub{text-align:center}
+
+    /* белая кнопка в CTA */
+    .cta-strip .btn-secondary { color:#fff; border-color:#fff; background:transparent; }
+    .cta-strip .btn-secondary:hover { background:rgba(255,255,255,.14); }
+
+    /* reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .btn-pro, .btn-pro::before, .btn-pro .arrow,
+      .cta-strip .btn-secondary{ transition:none !important; animation:none !important }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-container">
+      <a href="#" class="logo">
+        <div class="logo-icon"><img src="images/logo.png" alt=""></div>
+        Aivisa
+      </a>
+      <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню"><span class="bar"></span></button>
+      <ul class="nav-menu" id="navMenuDesktop">
+        <li><a href="#how-it-works">Как это работает</a></li>
+        <li><a href="#benefits">Преимущества</a></li>
+        <li><a href="#clients">Клиенты</a></li>
+        <li><a href="#security">Безопасность</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li class="nav-cta">
+          <a href="#form" class="btn btn-primary btn-pro" style="color: white;">
+            Запросить демо
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </li>
+      </ul>
+      <!-- mobile panel -->
+      <ul class="nav-menu mobile" id="navMenuMobile" aria-hidden="true">
+        <li><a href="#how-it-works">Как это работает</a></li>
+        <li><a href="#benefits">Преимущества</a></li>
+        <li><a href="#clients">Клиенты</a></li>
+        <li><a href="#security">Безопасность</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li class="nav-cta">
+          <a href="#form" class="btn btn-primary btn-pro" style="width:100%;justify-content:center">
+            Запросить демо
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-container">
+      <div class="hero-content">
+        <span class="badge hero-badge fade-in">🇰🇿 №1 в Казахстане и ЦА</span>
+        <h1 class="hero-title fade-in">AiVisa — подача виз за 5 минут</h1>
+        <p class="hero-subtitle fade-in delay-1">Загрузите паспорта — остальное платформа сделает сама.</p>
+        <div class="hero-buttons fade-in delay-2">
+          <a href="#form" class="btn btn-primary btn-pro glow">
+            Запросить демо
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <span class="badge" aria-label="Сравнение скорости"><strong>30–60 мин</strong> → <strong>5 мин</strong></span>
+        </div>
+      </div>
+      <div class="hero-visual fade-in delay-3">
+        <div class="hero-card">
+          <div class="card-header"></div>
+          <div class="card-content">
+            <div class="passport-grid">
+              <div class="passport-card">
+                <div class="passport-icon">📁</div>
+                <div class="passport-info">
+                  <div class="passport-name">Группа A</div>
+                  <div class="passport-details">12 паспортов</div>
+                </div>
+              </div>
+              <div class="passport-card">
+                <div class="passport-icon">📁</div>
+                <div class="passport-info">
+                  <div class="passport-name">Группа B</div>
+                  <div class="passport-details">24 паспорта</div>
+                </div>
+              </div>
+              <div class="passport-card">
+                <div class="passport-icon">📁</div>
+                <div class="passport-info">
+                  <div class="passport-name">Группа С</div>
+                  <div class="passport-details">19 паспортов</div>
+                </div>
+              </div>
+              <div class="passport-card">
+                <div class="passport-icon">📁</div>
+                <div class="passport-info">
+                  <div class="passport-name">Группа D</div>
+                  <div class="passport-details">15 паспортов</div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;">Начать процесс</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="how-it-works">
+    <div class="container">
+      <h2 class="section-title fade-in">Как это работает</h2>
+      <p class="section-subtitle fade-in delay-1">Раньше: 30–60 минут на заявку → Теперь: ~5 минут.</p>
+      <div class="steps-container">
+        <div class="step-card fade-in">
+          <div class="step-icon">1</div>
+          <h3 class="step-title">Загрузите паспорта</h3>
+          <p class="step-description">Drag-and-drop, массовый импорт, CSV.</p>
+        </div>
+        <div class="step-card fade-in delay-1">
+          <div class="step-icon">2</div>
+          <h3 class="step-title">Нажмите «Начать процесс»</h3>
+          <p class="step-description">Система сама заполнит и прикрепит файлы.</p>
+        </div>
+        <div class="step-card fade-in delay-2">
+          <div class="step-icon">3</div>
+          <h3 class="step-title">Готово за 5 минут</h3>
+          <p class="step-description">Статус, отчёт, уведомления.</p>
+        </div>
+      </div>
+      <div class="comparison-badge fade-in delay-3">
+        <span class="comparison-before">Раньше: 30–60 минут на заявку</span>
+        <span class="comparison-arrow">→</span>
+        <span class="comparison-after">Теперь: ~5 минут</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section id="benefits" class="benefits">
+    <div class="container">
+      <h2 class="section-title fade-in">Преимущества</h2>
+      <p class="section-subtitle fade-in delay-1">Минимум кликов — максимум результата</p>
+      <div class="benefits-grid">
+        <div class="benefit fade-in acc" data-acc>
+          <div class="acc-header" role="button" aria-expanded="false">
+            <div class="title"><span class="dot"></span>Скорость</div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Заявка формируется за минуты, а не часы.</p>
+          </div>
+        </div>
+        <div class="benefit fade-in delay-1 acc" data-acc>
+          <div class="acc-header" role="button" aria-expanded="false">
+            <div class="title"><span class="dot"></span>Точность</div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Автопроверки снижают человеческие ошибки.</p>
+          </div>
+        </div>
+        <div class="benefit fade-in delay-2 acc" data-acc>
+          <div class="acc-header" role="button" aria-expanded="false">
+            <div class="title"><span class="dot"></span>Масштаб</div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Обрабатывайте группы и потоки без перегрузки.</p>
+          </div>
+        </div>
+        <div class="benefit fade-in delay-3 acc" data-acc>
+          <div class="acc-header" role="button" aria-expanded="false">
+            <div class="title"><span class="dot"></span>Простота</div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Интуитивный интерфейс с первой минуты.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Clients -->
+  <section id="clients" class="clients">
+    <div class="container">
+      <h2 class="section-title fade-in">Нам доверяют</h2>
+      <p class="clients-sub fade-in delay-1">Платформа уже используется ведущими компаниями Казахстана и Центральной Азии.</p>
+    <div class="logos-wrap" aria-label="Логотипы клиентов">
+        <div class="logos-track" id="logosTrack">
+          <div class="client-logo"><img src="images/atlas.jpeg" alt="Atlas Hajj"></div>
+          <div class="client-logo"><img src="images/almarwa.jpg" alt="Almarwa"></div>
+          <div class="client-logo"><img src="images/ihsan.png" alt="Ihsan Travel"></div>
+          <div class="client-logo"><img src="images/qyzmet_sayahat.png" alt="Qyzmet Sayahat"></div>
+          <div class="client-logo"><img src="images/makkah.jpg" alt="Makkah travel"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section class="demo">
+    <div class="container demo-container">
+      <div class="demo-content fade-in">
+        <h2 class="demo-title">Посмотрите, как это просто</h2>
+        <p class="demo-description">Короткое видео: загрузка паспортов → одна кнопка → отправка заявок.</p>
+        <a href="#form" class="btn btn-primary btn-pro">
+          Получить доступ к демо
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+      <div class="demo-visual fade-in delay-1">
+        <div class="video-placeholder">Видео-демонстрация</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section id="security" class="security">
+    <div class="container">
+      <h2 class="section-title fade-in">Безопасность данных</h2>
+      <p class="section-subtitle fade-in delay-1">Мы обеспечиваем максимальную защиту ваших данных</p>
+      <div class="security-points">
+        <div class="security-point fade-in acc" data-acc>
+          <div class="acc-row acc-header" role="button" aria-expanded="false">
+            <div class="security-icon">🔐</div>
+            <div class="security-content"><h3>Шифрование в покое и в транзите</h3></div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Все данные защищены современными алгоритмами шифрования как при хранении, так и при передаче.</p>
+          </div>
+        </div>
+
+        <div class="security-point fade-in delay-1 acc" data-acc>
+          <div class="acc-row acc-header" role="button" aria-expanded="false">
+            <div class="security-icon">👥</div>
+            <div class="security-content"><h3>Разграничение ролей</h3></div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Разные уровни доступа для сотрудников вашей организации.</p>
+          </div>
+        </div>
+
+        <div class="security-point fade-in delay-2 acc" data-acc>
+          <div class="acc-row acc-header" role="button" aria-expanded="false">
+            <div class="security-icon">📋</div>
+            <div class="security-content"><h3>Журналы операций</h3></div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Все действия фиксируются для прозрачности и аудита.</p>
+          </div>
+        </div>
+
+        <div class="security-point fade-in delay-3 acc" data-acc>
+          <div class="acc-row acc-header" role="button" aria-expanded="false">
+            <div class="security-icon">💾</div>
+            <div class="security-content"><h3>Регулярные бэкапы</h3></div>
+            <span class="chev">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>Автоматические резервные копии для сохранности данных.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="faq">
+    <div class="container">
+      <h2 class="section-title fade-in">Часто задаваемые вопросы</h2>
+      <p class="section-subtitle fade-in delay-1">Ответы на самые популярные вопросы о платформе</p>
+      <div class="faq-container">
+        <div class="faq-item fade-in">
+          <div class="faq-question">Какие форматы паспортов поддерживаются? <span class="faq-toggle">▼</span></div>
+          <div class="faq-answer"><p>JPG, PNG, PDF — как единичные файлы, так и архивы с несколькими документами.</p></div>
+        </div>
+        <div class="faq-item fade-in delay-1">
+          <div class="faq-question">Что если в данных ошибка? <span class="faq-toggle">▼</span></div>
+          <div class="faq-answer"><p>Автопроверка подскажет, где неточность; отправка блокируется до исправления.</p></div>
+        </div>
+        <div class="faq-item fade-in delay-2">
+          <div class="faq-question">Подходит ли для больших групп? <span class="faq-toggle">▼</span></div>
+          <div class="faq-answer"><p>Да. Платформа оптимизирована под сотни заявок одновременно.</p></div>
+        </div>
+        <div class="faq-item fade-in delay-3">
+          <div class="faq-question">Сколько стоит и как начать? <span class="faq-toggle">▼</span></div>
+          <div class="faq-answer"><p>Зависит от объёма. Оставьте заявку ниже — покажем демо и предложим тариф.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-strip">
+    <div class="container">
+      <h2 class="fade-in">Готовы сократить подачу виз с часов до минут?</h2>
+      <p class="fade-in delay-1">Загрузите паспорта → нажмите кнопку — остальное система сделает сама.</p>
+      <a href="#form" class="btn btn-secondary fade-in delay-2 btn-pro" style="border-color:#fff;color:#fff;">
+        Запросить демо сегодня
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section id="form" class="form-section">
+    <div class="container">
+      <div class="form-container fade-in">
+        <h3 class="form-title">Запросите демонстрацию платформы</h3>
+        <form id="demo-form">
+          <div class="form-group">
+            <label for="company" class="form-label">Название компании</label>
+            <input type="text" id="company" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="phone" class="form-label">Телефон (WhatsApp)</label>
+            <input type="tel" id="phone" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="city" class="form-label">Город/Страна</label>
+            <input type="text" id="city" class="form-control" required>
+          </div>
+          <button type="submit" class="form-submit">Отправить</button>
+        </form>
+        <div class="form-success">
+          <h3>Спасибо!</h3>
+          <p>Мы свяжемся с вами в ближайшее время.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background:#0F172A;color:#fff;padding:80px 0 40px">
+    <div class="container">
+      <div class="footer-container" style="display:grid;grid-template-columns:2fr 1fr;gap:60px;margin-bottom:60px">
+        <div>
+          <div class="footer-logo" style="display:flex;align-items:center;gap:12px;font-size:1.5rem;font-weight:800;margin-bottom:24px">
+            <div class="logo-icon"><img src="images/logo.png" alt=""></div> aiVisa
+          </div>
+          <p class="footer-description" style="color:rgba(255,255,255,.7);max-width:420px">
+            № 1 в Казахстане по автоматизации подачи виз для хадж и умра компаний.
+          </p>
+        </div>
+        <div class="footer-contacts">
+          <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:20px">Контакты</h3>
+          <div class="footer-contact" style="display:flex;align-items:center;margin-bottom:12px;color:rgba(255,255,255,.75)">WhatsApp: +7 747 989 48 79</div>
+          <div class="footer-contact" style="display:flex;align-items:center;color:rgba(255,255,255,.75)">Email: shyndev001@gmail.com</div>
+        </div>
+      </div>
+      <div class="footer-bottom" style="text-align:center;padding-top:40px;border-top:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.55);font-size:.9rem">
+        © aiVisa, <span id="current-year"></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Floating Button -->
+  <a href="https://wa.me/77479894879?text=%D0%A1%D3%99%D0%BB%D0%B5%D0%BC%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B4%D0%B5%D0%BC%D0%BE%20aiVisa."
+     class="whatsapp-float" target="_blank" rel="noopener" aria-label="Написать в WhatsApp" title="Написать в WhatsApp">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path fill="#FFFFFF" d="M24 6c-9.94 0-18 7.46-18 16.67 0 3.19 1 6.18 2.78 8.72L7 41l9.26-2.71A18.9 18.9 0 0 0 24 39.33c9.94 0 18-7.46 18-16.66S33.94 6 24 6z"/>
+      <path fill="#25D366" d="M24 9.5c-8.1 0-14.67 6.07-14.67 13.57 0 2.8.93 5.43 2.59 7.63l.47.62-1.3 4.45 4.57-1.34.6.36A15.1 15.1 0 0 0 24 36.17c8.1 0 14.67-6.08 14.67-13.58S32.1 9.5 24 9.5z"/>
+      <path fill="#FFFFFF" d="M31.7 30.6c-.6.77-1.6 1.66-2.65 1.8-1.12.15-2.56-.13-4.25-.8-2.34-.93-4.9-3.01-6.74-5.1-1.85-2.1-3.2-4.58-3.5-6.52-.19-1.21.09-2.3.73-3.21.44-.62 1.13-1.34 1.77-1.7.42-.24.93-.17 1.26.17l2.02 2.06c.4.41.49 1.04.22 1.55l-.69 1.32c-.18.34-.16.76.05 1.22.39.85 1.23 2.01 2.2 2.99.97.98 2.14 1.84 2.98 2.23.45.2.86.22 1.21.04l1.36-.69c.51-.26 1.14-.17 1.55.23l2.03 2.02c.33.33.4.84.17 1.25z"/>
+    </svg>
+  </a>
+
+  <script>
+    // current year
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // burger menu (mobile)
+    const menuBtn = document.getElementById('menuBtn');
+    const mobilePanel = document.getElementById('navMenuMobile');
+    menuBtn.addEventListener('click', () => {
+      menuBtn.classList.toggle('active');
+      mobilePanel.classList.toggle('active');
+      const opened = mobilePanel.classList.contains('active');
+      mobilePanel.setAttribute('aria-hidden', String(!opened));
+    });
+
+    // close mobile panel on anchor click + smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', e=>{
+        if(a.getAttribute('href')==='#') return;
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if(!target) return;
+        mobilePanel.classList.remove('active');
+        menuBtn.classList.remove('active');
+        window.scrollTo({top: target.offsetTop - 80, behavior:'smooth'});
+      });
+    });
+
+    // header shadow
+    window.addEventListener('scroll', ()=>{
+      const header = document.querySelector('header');
+      header.style.boxShadow = window.scrollY > 50 ? '0 2px 20px rgba(0,0,0,.1)' : '0 2px 20px rgba(0,0,0,.05)';
+    });
+
+    // FAQ accordion
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item=>{
+      item.querySelector('.faq-question').addEventListener('click', ()=>{
+        faqItems.forEach(o=>{ if(o!==item) o.classList.remove('active'); });
+        item.classList.toggle('active');
+      });
+    });
+
+    // Generic accordions (Benefits & Security) — for all viewports
+    function setupAccordions(scope){
+      const groups = document.querySelectorAll(scope);
+      groups.forEach(group=>{
+        const cards = group.querySelectorAll('[data-acc]');
+        cards.forEach(card=>{
+          const header = card.querySelector('.acc-header');
+          if(!header) return;
+          header.setAttribute('tabindex','0');
+          header.addEventListener('click', toggle);
+          header.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggle.call(header); }});
+          function toggle(){
+            const isOpen = card.classList.contains('active');
+            cards.forEach(c=>{
+              if(c!==card){ c.classList.remove('active'); c.querySelector('.acc-header')?.setAttribute('aria-expanded','false'); }
+            });
+            card.classList.toggle('active', !isOpen);
+            header.setAttribute('aria-expanded', String(!isOpen));
+          }
+        });
+      });
+    }
+    setupAccordions('#benefits .benefits-grid');
+    setupAccordions('#security .security-points');
+
+
+    // Clients marquee sizing
+    (function (){
+      const wrap = document.querySelector('.logos-wrap');
+      const track = document.getElementById('logosTrack');
+      if(!wrap || !track) return;
+      const originalHTML = track.innerHTML;
+
+      function waitImages(){
+        const imgs = Array.from(track.querySelectorAll('img'));
+        return Promise.all(imgs.map(img=>{
+          if(img.complete && img.naturalWidth) return Promise.resolve();
+          return new Promise(res=>img.addEventListener('load', res, {once:true}));
+        }));
+      }
+      function setAnimation(){
+        const half = track.scrollWidth / 2;
+        track.style.setProperty('--marquee-distance', half + 'px');
+        const duration = Math.max(12, Math.round(half / 80));
+        track.style.setProperty('--marquee-duration', duration + 's');
+      }
+      async function build(){
+        track.innerHTML = originalHTML;
+        await waitImages();
+        track.innerHTML = originalHTML + originalHTML;
+        setAnimation();
+      }
+      let rid;
+      window.addEventListener('resize', ()=>{cancelAnimationFrame(rid); rid=requestAnimationFrame(build);});
+      wrap.addEventListener('mouseenter', ()=>track.style.animationPlayState='paused');
+      wrap.addEventListener('mouseleave', ()=>track.style.animationPlayState='running');
+      build();
+    })();
+
+    // Ripple-эффект для .btn-pro и белой кнопки в CTA
+    document.querySelectorAll('.btn-pro, .cta-strip .btn-secondary').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const r = document.createElement('span');
+        r.className = 'ripple';
+        const rect = btn.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        r.style.width = r.style.height = size + 'px';
+        r.style.left = (e.clientX - rect.left - size/2) + 'px';
+        r.style.top  = (e.clientY - rect.top  - size/2) + 'px';
+        btn.appendChild(r);
+        setTimeout(()=>r.remove(), 650);
+      }, {passive:true});
+    });
+
+
+    // form submit → WhatsApp
+const form = document.getElementById('demo-form');
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const company = document.getElementById('company').value.trim();
+  const phone   = document.getElementById('phone').value.trim();
+  const city    = document.getElementById('city').value.trim();
+
+  if (!company || !phone || !city) {
+    alert('Пожалуйста, заполните все поля.');
+    return;
+  }
+
+  // Текст сообщения в WhatsApp
+  const msg = [
+    'Здравствуйте! Хочу демо платформы aiVisa.',
+    `Компания: ${company}`,
+    `Телефон (WhatsApp): ${phone}`,
+    `Город/Страна: ${city}`,
+    `Источник: ${location.hostname}`
+  ].join('\n');
+
+  // Номер менеджера без "+" и пробелов
+  const waNumber = '77479894879';
+  const waURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+
+  // Открыть в новой вкладке; если блокируется — делаем redirect текущего окна
+  const win = window.open(waURL, '_blank');
+  if (!win) location.href = waURL;
+});
+  </script>
+</body>
+</html>
