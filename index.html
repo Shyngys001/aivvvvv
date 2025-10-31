@@ -737,7 +737,6 @@
       }
       let rid;
       window.addEventListener('resize', ()=>{cancelAnimationFrame(rid); rid=requestAnimationFrame(build);});
-      wrap.addEventListener('mouseenter', ()=>track.style.animationPlayState='paused');
       wrap.addEventListener('mouseleave', ()=>track.style.animationPlayState='running');
       build();
     })();
