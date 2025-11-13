@@ -1,639 +1,1781 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>aiVisa — автоматизация подачи виз для хадж и умра (5 минут вместо 60)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>aiVisa — автоматизация подачи виз за 5 минут</title>
   <meta name="description" content="Казахстанская платформа автоматизации подачи виз в Саудовскую Аравию для хадж и умра компаний. Загрузите паспорта и нажмите кнопку — остальное система сделает сама.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
   <style>
-    :root{
-      --primary:#7C4DFF;--primary-light:#C9B8FF;--primary-dark:#5E35B1;
-      --gradient:linear-gradient(135deg,#7C4DFF 0%,#C9B8FF 100%);
-      --text-dark:#0F172A;--text-light:#64748B;--white:#FFFFFF;--light-bg:#F8FAFC;--border:#E2E8F0;
-      --shadow:0 10px 25px rgba(0,0,0,.05);--shadow-lg:0 20px 40px rgba(124,77,255,.15);
-      --radius:12px;--radius-lg:20px
-    }
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Inter',sans-serif;color:var(--text-dark);line-height:1.6;overflow-x:hidden;background:var(--white)}
-    .container{width:90%;max-width:1200px;margin:0 auto;padding:0 20px}
-    section{padding:100px 0}
-    .section-title{font-size:2.5rem;font-weight:800;text-align:center;margin-bottom:20px;line-height:1.2}
-    .section-subtitle{font-size:1.1rem;color:var(--text-light);text-align:center;max-width:700px;margin:0 auto 60px}
-
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:16px 32px;border-radius:var(--radius);font-weight:600;text-decoration:none;transition:.3s;border:none;font-size:1rem;cursor:pointer}
-    .btn-primary{background:var(--gradient);color:#fff;box-shadow:var(--shadow-lg)}
-    .btn-primary:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(124,77,255,.25)}
-    .btn-secondary{background:transparent;color:var(--primary);border:2px solid var(--primary)}
-    .btn-secondary:hover{background:rgba(124,77,255,.05)}
-    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(124,77,255,.1);color:var(--primary);border-radius:50px;font-size:.875rem;font-weight:600}
-
-    /* === Стильные кнопки доступа (PRO) === */
-    .btn-pro{
-      position:relative; overflow:hidden; border:none;
-      border-radius:var(--radius); padding:16px 34px; font-weight:700; letter-spacing:.2px;
-      color:#fff;
-      background:linear-gradient(135deg,#7C4DFF 0%, #9D7BFF 50%, #7C4DFF 100%);
-      background-size:200% 100%;
-      box-shadow:0 10px 24px rgba(124,77,255,.30), inset 0 0 0 1px rgba(255,255,255,.15);
-      transform:translateZ(0);
-      transition:background-position .5s ease, transform .2s ease, box-shadow .25s ease, filter .25s ease;
-      will-change:transform,box-shadow,background-position,filter;
-    }
-    .btn-pro:hover{
-      background-position:100% 0; transform:translateY(-3px);
-      box-shadow:0 16px 32px rgba(124,77,255,.36); filter:saturate(1.08);
-    }
-    .btn-pro:active{ transform:translateY(-1px) scale(.99); box-shadow:0 10px 24px rgba(124,77,255,.28) }
-    .btn-pro:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(124,77,255,.18), 0 14px 30px rgba(124,77,255,.34) }
-    /* Блик */
-    .btn-pro::before{
-      content:""; position:absolute; inset:-120% -40%;
-      background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
-      transform:translateX(-60%) rotate(12deg); transition:transform .6s ease; pointer-events:none;
-    }
-    .btn-pro:hover::before{ transform:translateX(30%) rotate(12deg) }
-    /* Стрелка */
-    .btn-pro .arrow{ width:18px; height:18px; flex:0 0 18px; transition:transform .25s ease, opacity .25s ease; transform:translateX(0) }
-    .btn-pro:hover .arrow{ transform:translateX(6px) }
-    /* Свечение по желанию */
-    @keyframes btnGlow{ 0%,100%{box-shadow:0 10px 24px rgba(124,77,255,.30)} 50%{box-shadow:0 12px 28px rgba(124,77,255,.38)} }
-    .btn-pro.glow{ animation:btnGlow 2.4s ease-in-out infinite }
-    /* Ripple */
-    .btn-pro .ripple{
-      position:absolute; border-radius:50%; transform:scale(0);
-      background:rgba(255,255,255,.35); pointer-events:none; animation:ripple .6s ease-out forwards;
-    }
-    @keyframes ripple{ to{ transform:scale(12); opacity:0 } }
-
-    /* Header */
-    header{position:fixed;top:0;left:0;width:100%;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,.05);z-index:1000;transition:.3s}
-    .header-container{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
-    .logo{display:flex;align-items:center;gap:12px;font-size:1.5rem;font-weight:800;color:var(--text-dark);text-decoration:none}
-    .logo-icon{width:36px;height:36px;background:var(--gradient);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
-    .logo-icon img{width:40px}
-    .nav-menu{display:flex;list-style:none;gap:30px;align-items:center}
-    .nav-menu a{text-decoration:none;color:var(--text-dark);font-weight:500;transition:color .3s;position:relative}
-    .nav-menu a:hover{color:var(--primary)}
-    .nav-menu a::after{content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;background:var(--gradient);transition:width .3s}
-    .nav-menu a:hover::after{width:100%}
-    /* burger */
-    .mobile-menu-btn{display:none;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-dark);width:44px;height:44px;border-radius:10px;position:relative}
-    .mobile-menu-btn:focus-visible{outline:3px solid rgba(124,77,255,.35)}
-    .mobile-menu-btn .bar,.mobile-menu-btn .bar:before,.mobile-menu-btn .bar:after{
-      position:absolute;left:10px;right:10px;height:2px;background:var(--text-dark);content:'';transition:.25s;border-radius:2px
-    }
-    .mobile-menu-btn .bar{top:21px}
-    .mobile-menu-btn .bar:before{top:-8px}
-    .mobile-menu-btn .bar:after{top:8px}
-    .mobile-menu-btn.active .bar{background:transparent}
-    .mobile-menu-btn.active .bar:before{transform:translateY(8px) rotate(45deg)}
-    .mobile-menu-btn.active .bar:after{transform:translateY(-8px) rotate(-45deg)}
-    /* mobile dropdown panel */
-    .nav-menu.mobile{display:none;position:absolute;top:80px;left:0;width:100%;background:#fff;flex-direction:column;padding:20px 16px 24px;border-top:1px solid var(--border);box-shadow:0 10px 20px rgba(0,0,0,.1);gap:0}
-    .nav-menu.mobile li{margin:6px 0}
-    .nav-cta{margin-top:10px}
-
-    /* Hero */
-    .hero{padding-top:160px;padding-bottom:100px;background:linear-gradient(135deg,#F8FAFF 0%,#F0F4FF 100%);position:relative;overflow:hidden}
-    .hero::before{content:'';position:absolute;top:-50%;right:-10%;width:600px;height:600px;background:var(--gradient);border-radius:50%;opacity:.05;z-index:0}
-    .hero-container{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
-    .hero-content{flex:1;max-width:600px}
-    .hero-badge{margin-bottom:20px}
-    .hero-title{font-size:3.5rem;font-weight:800;line-height:1.1;margin-bottom:24px}
-    .hero-subtitle{font-size:1.25rem;color:var(--text-light);margin-bottom:40px}
-    .hero-buttons{display:flex;gap:16px;flex-wrap:wrap}
-    .hero-visual{flex:1;display:flex;justify-content:flex-end;position:relative}
-    .hero-card{width:100%;max-width:500px;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);overflow:hidden;transform:perspective(1000px) rotateY(-5deg) rotateX(5deg);transition:.5s}
-    .hero-card:hover{transform:perspective(1000px) rotateY(0) rotateX(0)}
-    .card-header{height:50px;background:var(--gradient);display:flex;align-items:center;padding:0 20px}
-    .card-content{padding:24px}
-
-    .passport-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
-    .passport-card{height:90px;background:var(--light-bg);border-radius:var(--radius);display:flex;align-items:center;padding:0 16px;border:1px dashed var(--border);transition:.3s}
-    .passport-card:hover{border-color:var(--primary);transform:translateY(-3px)}
-    .passport-icon{width:36px;height:36px;background:var(--primary);border-radius:8px;margin-right:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
-    .passport-info{flex:1}
-    .passport-name{font-weight:600;margin-bottom:3px;font-size:.98rem}
-    .passport-details{font-size:.85rem;color:var(--text-light)}
-
-    /* How it works */
-    .how-it-works{background:#fff}
-    .steps-container{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
-    .step-card{text-align:center;padding:36px 28px;border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow);transition:.3s;position:relative;overflow:hidden}
-    .step-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:var(--gradient)}
-    .step-card:hover{transform:translateY(-10px);box-shadow:var(--shadow-lg)}
-    .step-icon{width:72px;height:72px;margin:0 auto 20px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;box-shadow:0 10px 20px rgba(124,77,255,.2)}
-    .step-title{font-size:1.35rem;font-weight:700;margin-bottom:12px}
-    .step-description{color:var(--text-light)}
-    .comparison-badge{display:flex;justify-content:center;align-items:center;margin-top:40px;padding:16px 28px;background:var(--light-bg);border-radius:var(--radius);font-weight:700;max-width:500px;margin-left:auto;margin-right:auto}
-    .comparison-before{color:var(--text-light);text-decoration:line-through;margin-right:16px}
-    .comparison-arrow{margin:0 16px;color:var(--primary);font-size:1.3rem}
-    .comparison-after{color:var(--primary)}
-
-    /* Benefits (accordion for all viewports) */
-    .benefits{background:var(--light-bg)}
-    .benefits-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
-    .benefit{background:#fff;border-radius:16px;box-shadow:var(--shadow);transition:.25s;overflow:hidden}
-    .benefit:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-    .benefit .acc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 16px;font-weight:700;cursor:pointer}
-    .benefit .acc-header .title{display:flex;align-items:center;gap:8px;font-size:1.05rem}
-    .benefit .acc-body{padding:0 18px 0 34px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;color:var(--text-light)}
-    .benefit.active .acc-body{padding:0 18px 16px 34px;max-height:300px}
-    .benefit .dot{width:10px;height:10px;border-radius:50%;background:var(--primary);display:inline-block;margin-right:8px;vertical-align:middle}
-    .chev{transition:transform .25s;color:var(--primary)}
-    .benefit.active .chev{transform:rotate(180deg)}
-
-    /* Clients marquee (коротко) */
-    .client-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;background:#fff;box-shadow:var(--shadow)}
-    .client-logo img{height:94px;width:auto;object-fit:contain;border-radius:8px}
-    .logos-track{display:flex;align-items:center;gap:100px;will-change:transform;padding:10px 0;animation:marquee var(--marquee-duration,20s) linear infinite}
-    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(calc(-1 * var(--marquee-distance,50%)))}}
-
-    /* Demo */
-    .demo{background:var(--light-bg)}
-    .demo-container{display:flex;align-items:center;justify-content:space-between;gap:60px}
-    .demo-content{flex:1;max-width:500px}
-    .demo-title{font-size:2.25rem;font-weight:800;margin-bottom:20px}
-    .demo-description{color:var(--text-light);margin-bottom:30px}
-    .demo-visual{flex:1;display:flex;justify-content:center}
-    .video-placeholder{width:100%;max-width:550px;height:350px;background:var(--text-dark);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.25rem;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
-    .video-placeholder::before{content:'';position:absolute;inset:0;background:var(--gradient);opacity:.7}
-    .video-placeholder::after{content:'▶';position:absolute;font-size:3rem;color:#fff}
-
-    /* Security (accordion for all viewports) */
-    .security{background:#fff}
-    .security-points{max-width:800px;margin:0 auto}
-    .security-point{margin-bottom:18px;border-radius:var(--radius-lg);box-shadow:var(--shadow);transition:.3s;background:#fff;overflow:hidden}
-    .security-point:hover{box-shadow:var(--shadow-lg)}
-    .security-point .acc-row{display:flex;align-items:center;gap:14px;padding:18px;cursor:pointer}
-    .security-point .acc-body{padding:0 18px 0 18px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;color:var(--text-light)}
-    .security-point.active .acc-body{padding:0 18px 18px 18px;max-height:300px}
-    .security-icon{width:56px;height:56px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:1.4rem}
-    .security-content h3{font-size:1.3rem;font-weight:700;margin:0}
-    .security-point .chev{margin-left:auto}
-
-    /* FAQ */
-    .faq{background:var(--light-bg)}
-    .faq-container{max-width:800px;margin:0 auto}
-    .faq-item{margin-bottom:16px;border-radius:var(--radius);overflow:hidden;background:#fff;box-shadow:var(--shadow);transition:.3с}
-    .faq-item:hover{box-shadow:var(--shadow-lg)}
-    .faq-question{padding:24px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:1.05rem}
-    .faq-answer{padding:0 24px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;color:var(--text-light)}
-    .faq-item.active .faq-answer{padding:0 24px 24px;max-height:500px}
-    .faq-toggle{transition:transform .3s ease;color:var(--primary)}
-    .faq-item.active .faq-toggle{transform:rotate(180deg)}
-
-    /* CTA */
-    .cta-strip{background:var(--gradient);color:#fff;text-align:center;padding:80px 0}
-    .cta-strip h2{font-size:2.5rem;font-weight:800;margin-bottom:20px}
-    .cta-strip p{font-size:1.25rem;margin-bottom:30px;opacity:.9}
-
-    /* Form */
-    .form-section{background:#fff}
-    .form-container{max-width:700px;margin:0 auto;background:var(--light-bg);padding:40px;border-radius:var(--radius-lg);box-shadow:var(--shadow)}
-    .form-title{font-size:2rem;font-weight:800;text-align:center;margin-bottom:28px}
-    .form-group{margin-bottom:16px}
-    .form-label{display:block;margin-bottom:8px;font-weight:600}
-    .form-control{width:100%;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:1rem;transition:.3s}
-    .form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,77,255,.1)}
-    .form-submit{width:100%;padding:16px;background:var(--gradient);color:#fff;border:none;border-radius:var(--radius);font-weight:700;font-size:1.05rem;cursor:pointer;transition:.3s;box-shadow:var(--shadow-lg);margin-top:8px}
-    .form-submit:hover{transform:translateY(-2px);box-shadow:0 15px 30px rgba(124,77,255,.25)}
-    .form-success{display:none;text-align:center;padding:40px 20px}
-    .form-success h3{font-size:1.6rem;font-weight:800;margin-bottom:12px;color:var(--primary)}
-    .form-success p{color:var(--text-light)}
-
-    /* WhatsApp Floating */
-    .whatsapp-float{
-      position:fixed; right:24px; bottom:24px;
-      width:64px; height:64px; border-radius:50%;
-      background:#25D366; display:flex; align-items:center; justify-content:center;
-      box-shadow:0 8px 24px rgba(37,211,102,.35);
-      text-decoration:none; z-index:1000; transition:transform .2s, box-shadow .2s;
-    }
-    .whatsapp-float:hover{ transform:scale(1.06); box-shadow:0 10px 28px rgba(37,211,102,.45) }
-    .whatsapp-float::after{
-      content:""; position:absolute; inset:-8px; border-radius:50%; border:2px solid rgba(37,211,102,.35);
-      opacity:.0; transform:scale(.8); pointer-events:none; animation:waPulse 2.2s ease-out infinite;
-    }
-    @keyframes waPulse{ 0%{opacity:.35; transform:scale(.8)} 70%,100%{opacity:0; transform:scale(1.25)} }
-    .whatsapp-float svg{ width:30px; height:30px; display:block }
-    @media (max-width:640px){ .whatsapp-float{ right:16px; bottom:16px; width:56px; height:56px } }
-
-    /* Animations */
-    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-    .fade-in{opacity:0;animation:fadeInUp .6s ease forwards}
-    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}
-
-    /* Responsive tweaks */
-    @media (max-width:1100px){
-      .hero-title{font-size:3rem}
-      .steps-container{grid-template-columns:repeat(2,1fr)}
-      .benefits-grid{grid-template-columns:repeat(2,1fr)}
-    }
-    @media (max-width:900px){
-      .hero-container,.demo-container{flex-direction:column}
-      .hero-content,.demo-content{max-width:100%;text-align:center;margin-bottom:48px}
-      .hero-visual{justify-content:center}
-    }
-    @media (max-width:768px){
-      .section-title{font-size:2rem}
-      .hero-title{font-size:2.5rem}
-      .nav-menu{display:none}
-      .mobile-menu-btn{display:block}
-      .nav-menu.mobile.active{display:flex}
-      .passport-grid{gap:10px}
-      .passport-card{height:72px;padding:0 12px}
-      .passport-icon{width:30px;height:30px;font-size:16px;margin-right:10px}
-      .passport-name{font-size:.72rem}
-      .passport-details{font-size:.6rem}
-      .steps-container{grid-template-columns:1fr}
-      .form-container{padding:28px 20px}
-      .benefits-grid{grid-template-columns:1fr;gap:12px}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    /* Clients wrap helpers */
-    .logos-wrap{overflow:hidden;position:relative}
-    .client-logo{flex:0 0 auto}
-    @media (max-width:600px){.logos-track{gap:28px;padding:6px 0}.client-logo{padding:6px 10px;border-radius:10px}.client-logo img{height:66px}}
-    @media (max-width:380px){.logos-track{gap:20px}.client-logo img{height:38px}}
-
-    .clients-sub{text-align:center}
-
-    /* белая кнопка в CTA */
-    .cta-strip .btn-secondary { color:#fff; border-color:#fff; background:transparent; }
-    .cta-strip .btn-secondary:hover { background:rgba(255,255,255,.14); }
-
-    /* reduce motion */
-    @media (prefers-reduced-motion: reduce){
-      .btn-pro, .btn-pro::before, .btn-pro .arrow,
-      .cta-strip .btn-secondary{ transition:none !important; animation:none !important }
+    :root {
+      --brand-primary: #6366F1;
+      --brand-secondary: #8B5CF6;
+      --brand-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      
+      --bg-primary: #000000;
+      --bg-secondary: #0A0A0A;
+      --surface: rgba(255, 255, 255, 0.03);
+      --surface-elevated: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.06);
+      
+      --text-primary: #FFFFFF;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-tertiary: rgba(255, 255, 255, 0.5);
+      
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.4);
+      
+      --blur-sm: blur(8px);
+      --blur-md: blur(16px);
+      --blur-lg: blur(24px);
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-2xl: 32px;
+      
+      --spacing-xs: 8px;
+      --spacing-sm: 16px;
+      --spacing-md: 24px;
+      --spacing-lg: 32px;
+      --spacing-xl: 48px;
+      --spacing-2xl: 64px;
+      --spacing-3xl: 96px;
+      
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      color-scheme: dark;
     }
 
-    .footer {
-    background:#0F172A; color:#fff;
-    padding:56px 0 32px; font-size:14px;
-  }
-  .footer .container { max-width:1200px; width:90%; margin:0 auto; padding:0 20px; }
-  .footer-grid {
-    display:grid; grid-template-columns:1.6fr 1fr; gap:40px; align-items:start;
-  }
-  .f-brand {
-    display:flex; align-items:flex-start; gap:12px;
-  }
-  .f-logo {
-    width:34px; height:34px; border-radius:8px;
-    display:grid; place-items:center; background:linear-gradient(135deg,#7C4DFF, #9D7BFF);
-    box-shadow:0 6px 16px rgba(124,77,255,.35);
-    flex:0 0 34px;
-  }
-  .f-logo img { width:22px; height:22px; display:block; }
-  .f-title { font-weight:800; letter-spacing:.2px; font-size:18px; line-height:1; margin-top:2px; }
-  .f-desc { color:rgba(255,255,255,.68); margin-top:10px; max-width:460px; }
+    [data-theme="light"] {
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F9FAFB;
+      --surface: rgba(0, 0, 0, 0.02);
+      --surface-elevated: rgba(0, 0, 0, 0.04);
+      --border: rgba(0, 0, 0, 0.08);
+      
+      --text-primary: #000000;
+      --text-secondary: rgba(0, 0, 0, 0.7);
+      --text-tertiary: rgba(0, 0, 0, 0.5);
+      
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+      --shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.16);
+      
+      color-scheme: light;
+    }
 
-  .f-head { font-weight:700; margin-bottom:10px; font-size:13px; letter-spacing:.02em; color:#fff; }
-  .f-list { display:grid; gap:8px; }
-  .f-item {
-    display:flex; align-items:center; gap:10px;
-    color:rgba(255,255,255,.88); text-decoration:none;
-    padding:8px 10px; border-radius:10px; transition:.18s ease;
-    background:transparent;
-  }
-  .f-item:hover { background:rgba(255,255,255,.06); transform:translateY(-1px); }
-  .f-ico { width:18px; height:18px; color:#fff; flex:0 0 18px; opacity:.95; }
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-  .f-bottom {
-    margin-top:32px; padding-top:18px;
-    border-top:1px solid rgba(255,255,255,.12);
-    display:flex; justify-content:space-between; align-items:center;
-    color:rgba(255,255,255,.6); font-size:12.5px;
-    gap:12px; flex-wrap:wrap;
-  }
-  .f-links { display:flex; gap:16px; }
-  .f-links a { color:rgba(255,255,255,.75); text-decoration:none; }
-  .f-links a:hover { color:#fff; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
 
-  /* responsive */
-  @media (max-width:860px){
-    .footer-grid { grid-template-columns:1fr; gap:28px; }
-    .f-desc { max-width:none; }
-  }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(800px circle at 20% 0%, rgba(99, 102, 241, 0.15), transparent 50%),
+        radial-gradient(600px circle at 80% 100%, rgba(139, 92, 246, 0.1), transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    ::selection {
+      background: var(--brand-primary);
+      color: white;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface-elevated);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+
+    .glass {
+      background: var(--surface);
+      backdrop-filter: var(--blur-md) saturate(180%);
+      -webkit-backdrop-filter: var(--blur-md) saturate(180%);
+      border: 1px solid var(--border);
+    }
+
+    .glass-elevated {
+      background: var(--surface-elevated);
+      backdrop-filter: var(--blur-lg) saturate(180%);
+      -webkit-backdrop-filter: var(--blur-lg) saturate(180%);
+      border: 1px solid var(--border);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: var(--spacing-sm) 0;
+      backdrop-filter: var(--blur-md) saturate(180%);
+      -webkit-backdrop-filter: var(--blur-md) saturate(180%);
+      background: rgba(0, 0, 0, 0.7);
+      border-bottom: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    [data-theme="light"] header {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    header.scrolled {
+      box-shadow: var(--shadow-md);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 800;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: var(--transition);
+    }
+
+    .logo:hover {
+      opacity: 0.8;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--brand-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .logo-icon img {
+      width: 24px;
+      height: 24px;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: var(--spacing-lg);
+      align-items: center;
+    }
+
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    nav a:hover {
+      color: var(--text-primary);
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--brand-gradient);
+      transition: width 0.3s ease;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    .theme-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 10px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .theme-toggle:hover {
+      background: var(--surface-elevated);
+      transform: translateY(-2px);
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .mobile-menu-toggle span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: currentColor;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .mobile-menu-toggle span::before,
+    .mobile-menu-toggle span::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 2px;
+      background: currentColor;
+      transition: var(--transition);
+    }
+
+    .mobile-menu-toggle span::before {
+      top: -8px;
+    }
+
+    .mobile-menu-toggle span::after {
+      top: 8px;
+    }
+
+    .mobile-menu-toggle.active span {
+      background: transparent;
+    }
+
+    .mobile-menu-toggle.active span::before {
+      top: 0;
+      transform: rotate(45deg);
+    }
+
+    .mobile-menu-toggle.active span::after {
+      top: 0;
+      transform: rotate(-45deg);
+    }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 80px;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: var(--blur-lg);
+      -webkit-backdrop-filter: var(--blur-lg);
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border);
+      z-index: 999;
+    }
+
+    [data-theme="light"] .mobile-menu {
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .mobile-menu.active {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mobile-menu ul {
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .mobile-menu a {
+      display: block;
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+    }
+
+    .mobile-menu a:hover {
+      background: var(--surface);
+    }
+
+    .hero {
+      padding: 160px 0 var(--spacing-3xl);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      text-align: center;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-md);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+    }
+
+    h1 {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--spacing-md);
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(18px, 2vw, 24px);
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xl);
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      border-radius: var(--radius-xl);
+      font-weight: 700;
+      font-size: 16px;
+      text-decoration: none;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--brand-gradient);
+      color: white;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-elevated);
+      transform: translateY(-2px);
+    }
+
+    .btn svg {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .btn:hover svg {
+      transform: translateX(4px);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease, height 0.6s ease;
+    }
+
+    .btn:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .hero-visual {
+      max-width: 900px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .hero-card {
+      background: var(--surface);
+      backdrop-filter: var(--blur-lg) saturate(180%);
+      -webkit-backdrop-filter: var(--blur-lg) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-xl);
+      transform: rotateX(5deg) rotateY(-5deg);
+      transition: transform 0.6s ease;
+    }
+
+    .hero-card:hover {
+      transform: rotateX(0deg) rotateY(0deg);
+    }
+
+    .card-header {
+      height: 48px;
+      background: var(--brand-gradient);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      margin: calc(var(--spacing-lg) * -1) calc(var(--spacing-lg) * -1) var(--spacing-md);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-md);
+    }
+
+    .card-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .card-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .passport-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .passport-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .passport-card:hover {
+      background: var(--surface-elevated);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .passport-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--brand-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .passport-info h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .passport-info p {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .section {
+      padding: var(--spacing-3xl) 0;
+      position: relative;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto var(--spacing-2xl);
+    }
+
+    h2 {
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 900;
+      margin-bottom: var(--spacing-md);
+      letter-spacing: -0.01em;
+    }
+
+    .section-subtitle {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .step-card {
+      background: var(--surface);
+      backdrop-filter: var(--blur-md);
+      -webkit-backdrop-filter: var(--blur-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--brand-gradient);
+    }
+
+    .step-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+      background: var(--surface-elevated);
+    }
+
+    .step-number {
+      width: 64px;
+      height: 64px;
+      background: var(--brand-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 900;
+      color: white;
+      margin-bottom: var(--spacing-md);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .step-card h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .step-card p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .benefit-card {
+      background: var(--surface);
+      backdrop-filter: var(--blur-md);
+      -webkit-backdrop-filter: var(--blur-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .benefit-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .benefit-header {
+      padding: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .benefit-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .benefit-icon {
+      width: 8px;
+      height: 8px;
+      background: var(--brand-primary);
+      border-radius: 50%;
+    }
+
+    .benefit-toggle {
+      color: var(--text-tertiary);
+      transition: transform 0.3s ease;
+    }
+
+    .benefit-card.active .benefit-toggle {
+      transform: rotate(180deg);
+    }
+
+    .benefit-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 var(--spacing-md);
+    }
+
+    .benefit-card.active .benefit-body {
+      max-height: 200px;
+      padding: 0 var(--spacing-md) var(--spacing-md);
+    }
+
+    .benefit-body p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .clients-marquee {
+      overflow: hidden;
+      padding: var(--spacing-xl) 0;
+      position: relative;
+    }
+
+    .clients-marquee::before,
+    .clients-marquee::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 100px;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .clients-marquee::before {
+      left: 0;
+      background: linear-gradient(to right, var(--bg-primary), transparent);
+    }
+
+    .clients-marquee::after {
+      right: 0;
+      background: linear-gradient(to left, var(--bg-primary), transparent);
+    }
+
+    .clients-track {
+      display: flex;
+      gap: var(--spacing-xl);
+      animation: scroll 30s linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes scroll {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    .client-logo {
+      flex-shrink: 0;
+      width: 280px;
+      height: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-md);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+    }
+
+    .client-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: filter 0.3s ease;
+      border-radius: 10px;
+    }
+
+    .client-logo:hover img {
+      filter: grayscale(0%) brightness(1);
+    }
+
+    .demo-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-2xl);
+      align-items: center;
+    }
+
+    .demo-text h2 {
+      margin-bottom: var(--spacing-md);
+      text-align: left;
+    }
+
+    .demo-text p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .demo-video {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .demo-video::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(99, 102, 241, 0.1), transparent 70%);
+    }
+
+    .play-button {
+      width: 80px;
+      height: 80px;
+      background: var(--brand-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .play-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.5);
+    }
+
+    .play-button::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 20px solid white;
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      margin-left: 4px;
+    }
+
+    .security-grid,
+    .faq-grid {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .accordion-item {
+      background: var(--surface);
+      backdrop-filter: var(--blur-md);
+      -webkit-backdrop-filter: var(--blur-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--spacing-md);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .accordion-item:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .accordion-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .accordion-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--brand-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .accordion-title {
+      flex: 1;
+    }
+
+    .accordion-title h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .accordion-toggle {
+      color: var(--text-tertiary);
+      transition: transform 0.3s ease;
+      font-size: 20px;
+    }
+
+    .accordion-item.active .accordion-toggle {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 var(--spacing-lg);
+    }
+
+    .accordion-item.active .accordion-body {
+      max-height: 300px;
+      padding: 0 var(--spacing-lg) var(--spacing-lg);
+    }
+
+    .accordion-body p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .cta-section {
+      background: var(--brand-gradient);
+      padding: var(--spacing-3xl) 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="1" fill="white" fill-opacity="0.1"/></svg>');
+      opacity: 0.5;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-section h2 {
+      color: white;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .cta-section p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 20px;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .cta-section .btn-secondary {
+      background: white;
+      color: var(--brand-primary);
+      border: none;
+    }
+
+    .cta-section .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .form-section {
+      padding: var(--spacing-3xl) 0;
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--surface);
+      backdrop-filter: var(--blur-lg);
+      -webkit-backdrop-filter: var(--blur-lg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: var(--spacing-xl);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .form-container h3 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 16px;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-submit {
+      width: 100%;
+      padding: 16px;
+      background: var(--brand-gradient);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+
+    .form-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+    }
+
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: var(--spacing-xl);
+    }
+
+    .form-success h3 {
+      font-size: 28px;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .form-success p {
+      color: var(--text-secondary);
+      font-size: 18px;
+    }
+
+    footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: var(--spacing-2xl) 0 var(--spacing-lg);
+    }
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--spacing-2xl);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .footer-logo {
+      width: 48px;
+      height: 48px;
+      background: var(--brand-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .footer-logo img {
+      width: 28px;
+      height: 28px;
+    }
+
+    .footer-info h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .footer-info p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 500px;
+    }
+
+    .footer-links h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: var(--spacing-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-links ul {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 8px;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      padding: 8px;
+      margin: -8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .footer-links a:hover {
+      color: var(--text-primary);
+      background: var(--surface);
+    }
+
+    .footer-links svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .footer-bottom {
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    .footer-legal {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    .footer-legal a {
+      color: var(--text-tertiary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .footer-legal a:hover {
+      color: var(--text-primary);
+    }
+
+    .whatsapp-float {
+      position: fixed;
+      bottom: var(--spacing-lg);
+      right: var(--spacing-lg);
+      width: 64px;
+      height: 64px;
+      background: #25D366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
+      z-index: 999;
+      transition: var(--transition);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .whatsapp-float:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 12px 32px rgba(37, 211, 102, 0.5);
+    }
+
+    .whatsapp-float svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4), 0 0 0 0 rgba(37, 211, 102, 0.4);
+      }
+      50% {
+        box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4), 0 0 0 20px rgba(37, 211, 102, 0);
+      }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .demo-content {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-text {
+        text-align: center;
+      }
+
+      .demo-text h2 {
+        text-align: center;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        display: none;
+      }
+
+      .mobile-menu-toggle {
+        display: block;
+      }
+
+      .hero {
+        padding: 120px 0 var(--spacing-2xl);
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        justify-content: center;
+      }
+
+      .passport-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid,
+      .benefits-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .client-logo {
+        width: 150px;
+        height: 100px;
+      }
+
+      .clients-track {
+        gap: var(--spacing-md);
+      }
+
+      .whatsapp-float {
+        width: 56px;
+        height: 56px;
+        bottom: var(--spacing-md);
+        right: var(--spacing-md);
+      }
+
+      .whatsapp-float svg {
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 var(--spacing-sm);
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      h2 {
+        font-size: 28px;
+      }
+
+      .section {
+        padding: var(--spacing-2xl) 0;
+      }
+
+      .btn {
+        padding: 14px 24px;
+        font-size: 15px;
+      }
+
+      .step-card,
+      .benefit-card,
+      .accordion-item {
+        padding: var(--spacing-md);
+      }
+
+      .form-container {
+        padding: var(--spacing-md);
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header>
-    <div class="container header-container">
-      <a href="#" class="logo">
-        <div class="logo-icon"><img src="images/logo.png" alt=""></div>
-        Aivisa
-      </a>
-      <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню"><span class="bar"></span></button>
-      <ul class="nav-menu" id="navMenuDesktop">
-        <li><a href="#how-it-works">Как это работает</a></li>
-        <li><a href="#benefits">Преимущества</a></li>
-        <li><a href="#clients">Клиенты</a></li>
-        <li><a href="#security">Безопасность</a></li>
-        <li><a href="#faq">FAQ</a></li>
-        <li class="nav-cta">
-          <a href="#form" class="btn btn-primary btn-pro" style="color: white;">
-            Запросить демо
-            <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </a>
-        </li>
-      </ul>
-      <!-- mobile panel -->
-      <ul class="nav-menu mobile" id="navMenuMobile" aria-hidden="true">
-        <li><a href="#how-it-works">Как это работает</a></li>
-        <li><a href="#benefits">Преимущества</a></li>
-        <li><a href="#clients">Клиенты</a></li>
-        <li><a href="#security">Безопасность</a></li>
-        <li><a href="#faq">FAQ</a></li>
-        <li class="nav-cta">
-          <a href="#form" class="btn btn-primary btn-pro" style="width:100%;justify-content:center">
-            Запросить демо
-            <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </a>
-        </li>
-      </ul>
+  <header id="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="#" class="logo">
+          <div class="logo-icon">
+            <img src="images/logo.png" alt="aiVisa">
+          </div>
+          aiVisa
+        </a>
+
+        <nav id="desktopNav">
+          <ul>
+            <li><a href="#how-it-works">Как это работает</a></li>
+            <li><a href="#benefits">Преимущества</a></li>
+            <li><a href="#clients">Клиенты</a></li>
+            <li><a href="#security">Безопасность</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li>
+              <a href="#form" class="btn btn-primary">
+                Запросить демо
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M13 5l7 7-7 7"/>
+                </svg>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему">
+          <span id="themeIcon">🌙</span>
+        </button>
+
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Открыть меню">
+          <span></span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container hero-container">
-      <div class="hero-content">
-        <span class="badge hero-badge fade-in">🇰🇿 №1 в Казахстане и ЦА</span>
-        <h1 class="hero-title fade-in">AiVisa — подача виз за 5 минут</h1>
-        <p class="hero-subtitle fade-in delay-1">Загрузите паспорта — остальное платформа сделает сама.</p>
-        <div class="hero-buttons fade-in delay-2">
-          <a href="#form" class="btn btn-primary btn-pro glow">
-            Запросить демо
-            <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </a>
-          <span class="badge" aria-label="Сравнение скорости"><strong>30–60 мин</strong> → <strong>5 мин</strong></span>
-        </div>
-      </div>
-      <div class="hero-visual fade-in delay-3">
-        <div class="hero-card">
-          <div class="card-header"></div>
-          <div class="card-content">
-            <div class="passport-grid">
-              <div class="passport-card">
-                <div class="passport-icon">📁</div>
-                <div class="passport-info">
-                  <div class="passport-name">Группа A</div>
-                  <div class="passport-details">12 паспортов</div>
-                </div>
-              </div>
-              <div class="passport-card">
-                <div class="passport-icon">📁</div>
-                <div class="passport-info">
-                  <div class="passport-name">Группа B</div>
-                  <div class="passport-details">24 паспорта</div>
-                </div>
-              </div>
-              <div class="passport-card">
-                <div class="passport-icon">📁</div>
-                <div class="passport-info">
-                  <div class="passport-name">Группа С</div>
-                  <div class="passport-details">19 паспортов</div>
-                </div>
-              </div>
-              <div class="passport-card">
-                <div class="passport-icon">📁</div>
-                <div class="passport-info">
-                  <div class="passport-name">Группа D</div>
-                  <div class="passport-details">15 паспортов</div>
-                </div>
-              </div>
-            </div>
-            <button class="btn btn-primary" style="width:100%;">Начать процесс</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section id="how-it-works" class="how-it-works">
-    <div class="container">
-      <h2 class="section-title fade-in">Как это работает</h2>
-      <p class="section-subtitle fade-in delay-1">Раньше: 30–60 минут на заявку → Теперь: ~5 минут.</p>
-      <div class="steps-container">
-        <div class="step-card fade-in">
-          <div class="step-icon">1</div>
-          <h3 class="step-title">Загрузите паспорта</h3>
-          <p class="step-description">Drag-and-drop, массовый импорт, CSV.</p>
-        </div>
-        <div class="step-card fade-in delay-1">
-          <div class="step-icon">2</div>
-          <h3 class="step-title">Нажмите «Начать процесс»</h3>
-          <p class="step-description">Система сама заполнит и прикрепит файлы.</p>
-        </div>
-        <div class="step-card fade-in delay-2">
-          <div class="step-icon">3</div>
-          <h3 class="step-title">Готово за 5 минут</h3>
-          <p class="step-description">Статус, отчёт, уведомления.</p>
-        </div>
-      </div>
-      <div class="comparison-badge fade-in delay-3">
-        <span class="comparison-before">Раньше: 30–60 минут на заявку</span>
-        <span class="comparison-arrow">→</span>
-        <span class="comparison-after">Теперь: ~5 минут</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Benefits -->
-  <section id="benefits" class="benefits">
-    <div class="container">
-      <h2 class="section-title fade-in">Преимущества</h2>
-      <p class="section-subtitle fade-in delay-1">Минимум кликов — максимум результата</p>
-      <div class="benefits-grid">
-        <div class="benefit fade-in acc" data-acc>
-          <div class="acc-header" role="button" aria-expanded="false">
-            <div class="title"><span class="dot"></span>Скорость</div>
-            <span class="chev">▼</span>
-          </div>
-          <div class="acc-body">
-            <p>Заявка формируется за минуты, а не часы.</p>
-          </div>
-        </div>
-        <div class="benefit fade-in delay-1 acc" data-acc>
-          <div class="acc-header" role="button" aria-expanded="false">
-            <div class="title"><span class="dot"></span>Точность</div>
-            <span class="chev">▼</span>
-          </div>
-          <div class="acc-body">
-            <p>Автопроверки снижают человеческие ошибки.</p>
-          </div>
-        </div>
-        <div class="benefit fade-in delay-2 acc" data-acc>
-          <div class="acc-header" role="button" aria-expanded="false">
-            <div class="title"><span class="dot"></span>Масштаб</div>
-            <span class="chev">▼</span>
-          </div>
-          <div class="acc-body">
-            <p>Обрабатывайте группы и потоки без перегрузки.</p>
-          </div>
-        </div>
-        <div class="benefit fade-in delay-3 acc" data-acc>
-          <div class="acc-header" role="button" aria-expanded="false">
-            <div class="title"><span class="dot"></span>Простота</div>
-            <span class="chev">▼</span>
-          </div>
-          <div class="acc-body">
-            <p>Интуитивный интерфейс с первой минуты.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Clients -->
-  <section id="clients" class="clients">
-    <div class="container">
-      <h2 class="section-title fade-in">Нам доверяют</h2>
-      <p class="clients-sub fade-in delay-1">Платформа уже используется ведущими компаниями Казахстана и Центральной Азии.</p>
-    <div class="logos-wrap" aria-label="Логотипы клиентов">
-        <div class="logos-track" id="logosTrack">
-          <div class="client-logo"><img src="images/atlas.jpeg" alt="Atlas Hajj"></div>
-          <div class="client-logo"><img src="images/almarwa.jpg" alt="Almarwa"></div>
-          <div class="client-logo"><img src="images/ihsan.png" alt="Ihsan Travel"></div>
-          <div class="client-logo"><img src="images/qyzmet_sayahat.png" alt="Qyzmet Sayahat"></div>
-          <div class="client-logo"><img src="images/makkah.jpg" alt="Makkah travel"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Demo -->
-  <section class="demo">
-    <div class="container demo-container">
-      <div class="demo-content fade-in">
-        <h2 class="demo-title">Посмотрите, как это просто</h2>
-        <p class="demo-description">Короткое видео: загрузка паспортов → одна кнопка → отправка заявок.</p>
-        <a href="#form" class="btn btn-primary btn-pro">
-          Получить доступ к демо
-          <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <div class="mobile-menu" id="mobileMenu">
+    <ul>
+      <li><a href="#how-it-works">Как это работает</a></li>
+      <li><a href="#benefits">Преимущества</a></li>
+      <li><a href="#clients">Клиенты</a></li>
+      <li><a href="#security">Безопасность</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li>
+        <a href="#form" class="btn btn-primary" style="width: 100%; justify-content: center;">
+          Запросить демо
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M13 5l7 7-7 7"/>
           </svg>
         </a>
+      </li>
+    </ul>
+  </div>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <span class="badge fade-in">🇰🇿 №1 в Центральной Азии</span>
+        <h1 class="fade-in delay-1">aiVisa — подача виз за 5 минут</h1>
+        <p class="hero-subtitle fade-in delay-2">Загрузите паспорта — остальное платформа сделает сама</p>
+        <div class="hero-buttons fade-in delay-3">
+          <a href="#form" class="btn btn-primary">
+            Запросить демо
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M13 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <span class="badge">30–60 мин → 5 мин</span>
+        </div>
       </div>
-      <div class="demo-visual fade-in delay-1">
-        <div class="video-placeholder">Видео-демонстрация</div>
+
+      <div class="hero-visual fade-in delay-4">
+        <div class="hero-card">
+          <div class="card-header">
+            <div class="card-dots">
+              <span class="card-dot"></span>
+              <span class="card-dot"></span>
+              <span class="card-dot"></span>
+            </div>
+          </div>
+          <div class="passport-grid">
+            <div class="passport-card">
+              <div class="passport-icon">📁</div>
+              <div class="passport-info">
+                <h4>Группа A</h4>
+                <p>12 паспортов</p>
+              </div>
+            </div>
+            <div class="passport-card">
+              <div class="passport-icon">📁</div>
+              <div class="passport-info">
+                <h4>Группа B</h4>
+                <p>24 паспорта</p>
+              </div>
+            </div>
+            <div class="passport-card">
+              <div class="passport-icon">📁</div>
+              <div class="passport-info">
+                <h4>Группа C</h4>
+                <p>19 паспортов</p>
+              </div>
+            </div>
+            <div class="passport-card">
+              <div class="passport-icon">📁</div>
+              <div class="passport-info">
+                <h4>Группа D</h4>
+                <p>15 паспортов</p>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width: 100%;">Начать процесс</button>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Security -->
-  <section id="security" class="security">
+  <section id="how-it-works" class="section">
     <div class="container">
-      <h2 class="section-title fade-in">Безопасность данных</h2>
-      <p class="section-subtitle fade-in delay-1">Мы обеспечиваем максимальную защиту ваших данных</p>
-      <div class="security-points">
-        <div class="security-point fade-in acc" data-acc>
-          <div class="acc-row acc-header" role="button" aria-expanded="false">
-            <div class="security-icon">🔐</div>
-            <div class="security-content"><h3>Шифрование в покое и в транзите</h3></div>
-            <span class="chev">▼</span>
+      <div class="section-header">
+        <h2 class="fade-in">Как это работает</h2>
+        <p class="section-subtitle fade-in delay-1">Раньше: 30–60 минут на заявку. Теперь: ~5 минут</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card fade-in">
+          <div class="step-number">1</div>
+          <h3>Загрузите паспорта</h3>
+          <p>Drag-and-drop, массовый импорт, CSV — выбирайте удобный способ</p>
+        </div>
+        <div class="step-card fade-in delay-1">
+          <div class="step-number">2</div>
+          <h3>Нажмите «Начать процесс»</h3>
+          <p>Система сама заполнит все поля и прикрепит необходимые файлы</p>
+        </div>
+        <div class="step-card fade-in delay-2">
+          <div class="step-number">3</div>
+          <h3>Готово за 5 минут</h3>
+          <p>Получите статус, отчёт и уведомления о каждом шаге</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="benefits" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="fade-in">Преимущества</h2>
+        <p class="section-subtitle fade-in delay-1">Минимум кликов — максимум результата</p>
+      </div>
+
+      <div class="benefits-grid">
+        <div class="benefit-card fade-in">
+          <div class="benefit-header">
+            <div class="benefit-title">
+              <span class="benefit-icon"></span>
+              Скорость
+            </div>
+            <span class="benefit-toggle">▼</span>
           </div>
-          <div class="acc-body">
+          <div class="benefit-body">
+            <p>Заявка формируется за минуты, а не часы. Обрабатывайте сотни паспортов одновременно.</p>
+          </div>
+        </div>
+
+        <div class="benefit-card fade-in delay-1">
+          <div class="benefit-header">
+            <div class="benefit-title">
+              <span class="benefit-icon"></span>
+              Точность
+            </div>
+            <span class="benefit-toggle">▼</span>
+          </div>
+          <div class="benefit-body">
+            <p>Автоматические проверки снижают риск человеческих ошибок до минимума.</p>
+          </div>
+        </div>
+
+        <div class="benefit-card fade-in delay-2">
+          <div class="benefit-header">
+            <div class="benefit-title">
+              <span class="benefit-icon"></span>
+              Масштаб
+            </div>
+            <span class="benefit-toggle">▼</span>
+          </div>
+          <div class="benefit-body">
+            <p>Обрабатывайте любое количество групп и потоков без перегрузки системы.</p>
+          </div>
+        </div>
+
+        <div class="benefit-card fade-in delay-3">
+          <div class="benefit-header">
+            <div class="benefit-title">
+              <span class="benefit-icon"></span>
+              Простота
+            </div>
+            <span class="benefit-toggle">▼</span>
+          </div>
+          <div class="benefit-body">
+            <p>Интуитивный интерфейс, понятный с первой минуты работы.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="clients" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="fade-in">Нам доверяют</h2>
+        <p class="section-subtitle fade-in delay-1">Платформа используется ведущими компаниями Казахстана и Центральной Азии</p>
+      </div>
+    </div>
+
+    <div class="clients-marquee">
+      <div class="clients-track" id="clientsTrack">
+        <div class="client-logo"><img src="images/atlas.jpeg" alt="Atlas Hajj"></div>
+        <div class="client-logo"><img src="images/almarwa.jpg" alt="Almarwa"></div>
+        <div class="client-logo"><img src="images/ihsan.png" alt="Ihsan Travel"></div>
+        <div class="client-logo"><img src="images/qyzmet_sayahat.png" alt="Qyzmet Sayahat"></div>
+        <div class="client-logo"><img src="images/makkah.jpg" alt="Makkah Travel"></div>
+        <div class="client-logo"><img src="images/atlas.jpeg" alt="Atlas Hajj"></div>
+        <div class="client-logo"><img src="images/almarwa.jpg" alt="Almarwa"></div>
+        <div class="client-logo"><img src="images/ihsan.png" alt="Ihsan Travel"></div>
+        <div class="client-logo"><img src="images/qyzmet_sayahat.png" alt="Qyzmet Sayahat"></div>
+        <div class="client-logo"><img src="images/makkah.jpg" alt="Makkah Travel"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section section">
+    <div class="container">
+      <div class="demo-content">
+        <div class="demo-text fade-in">
+          <h2>Посмотрите, как это просто</h2>
+          <p>Короткое видео демонстрирует весь процесс: загрузка паспортов → одна кнопка → отправка заявок</p>
+          <a href="#form" class="btn btn-primary">
+            Получить доступ к демо
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M13 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+        <div class="demo-video fade-in delay-1" data-video="https://www.youtube.com/watch?v=4k6h_4Z62jo">
+          <div class="play-button"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="security" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="fade-in">Безопасность данных</h2>
+        <p class="section-subtitle fade-in delay-1">Мы обеспечиваем максимальную защиту ваших данных</p>
+      </div>
+
+      <div class="security-grid">
+        <div class="accordion-item fade-in">
+          <div class="accordion-header">
+            <div class="accordion-icon">🔐</div>
+            <div class="accordion-title">
+              <h3>Шифрование в покое и в транзите</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
+          </div>
+          <div class="accordion-body">
             <p>Все данные защищены современными алгоритмами шифрования как при хранении, так и при передаче.</p>
           </div>
         </div>
 
-        <div class="security-point fade-in delay-1 acc" data-acc>
-          <div class="acc-row acc-header" role="button" aria-expanded="false">
-            <div class="security-icon">👥</div>
-            <div class="security-content"><h3>Разграничение ролей</h3></div>
-            <span class="chev">▼</span>
+        <div class="accordion-item fade-in delay-1">
+          <div class="accordion-header">
+            <div class="accordion-icon">👥</div>
+            <div class="accordion-title">
+              <h3>Разграничение ролей</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
           </div>
-          <div class="acc-body">
-            <p>Разные уровни доступа для сотрудников вашей организации.</p>
-          </div>
-        </div>
-
-        <div class="security-point fade-in delay-2 acc" data-acc>
-          <div class="acc-row acc-header" role="button" aria-expanded="false">
-            <div class="security-icon">📋</div>
-            <div class="security-content"><h3>Журналы операций</h3></div>
-            <span class="chev">▼</span>
-          </div>
-          <div class="acc-body">
-            <p>Все действия фиксируются для прозрачности и аудита.</p>
+          <div class="accordion-body">
+            <p>Разные уровни доступа для сотрудников вашей организации обеспечивают безопасность и контроль.</p>
           </div>
         </div>
 
-        <div class="security-point fade-in delay-3 acc" data-acc>
-          <div class="acc-row acc-header" role="button" aria-expanded="false">
-            <div class="security-icon">💾</div>
-            <div class="security-content"><h3>Регулярные бэкапы</h3></div>
-            <span class="chev">▼</span>
+        <div class="accordion-item fade-in delay-2">
+          <div class="accordion-header">
+            <div class="accordion-icon">📋</div>
+            <div class="accordion-title">
+              <h3>Журналы операций</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
           </div>
-          <div class="acc-body">
-            <p>Автоматические резервные копии для сохранности данных.</p>
+          <div class="accordion-body">
+            <p>Все действия фиксируются в подробных журналах для прозрачности и аудита.</p>
+          </div>
+        </div>
+
+        <div class="accordion-item fade-in delay-3">
+          <div class="accordion-header">
+            <div class="accordion-icon">💾</div>
+            <div class="accordion-title">
+              <h3>Регулярные бэкапы</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
+          </div>
+          <div class="accordion-body">
+            <p>Автоматические резервные копии обеспечивают полную сохранность ваших данных.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="faq">
+  <section id="faq" class="section">
     <div class="container">
-      <h2 class="section-title fade-in">Часто задаваемые вопросы</h2>
-      <p class="section-subtitle fade-in delay-1">Ответы на самые популярные вопросы о платформе</p>
-      <div class="faq-container">
-        <div class="faq-item fade-in">
-          <div class="faq-question">Какие форматы паспортов поддерживаются? <span class="faq-toggle">▼</span></div>
-          <div class="faq-answer"><p>JPG, PNG, PDF — как единичные файлы, так и архивы с несколькими документами.</p></div>
+      <div class="section-header">
+        <h2 class="fade-in">Часто задаваемые вопросы</h2>
+        <p class="section-subtitle fade-in delay-1">Ответы на самые популярные вопросы о платформе</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="accordion-item fade-in">
+          <div class="accordion-header">
+            <div class="accordion-title">
+              <h3>Какие форматы паспортов поддерживаются?</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
+          </div>
+          <div class="accordion-body">
+            <p>JPG, PNG, PDF — как единичные файлы, так и архивы с несколькими документами. Система автоматически распознаёт данные.</p>
+          </div>
         </div>
-        <div class="faq-item fade-in delay-1">
-          <div class="faq-question">Что если в данных ошибка? <span class="faq-toggle">▼</span></div>
-          <div class="faq-answer"><p>Автопроверка подскажет, где неточность; отправка блокируется до исправления.</p></div>
+
+        <div class="accordion-item fade-in delay-1">
+          <div class="accordion-header">
+            <div class="accordion-title">
+              <h3>Что если в данных ошибка?</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
+          </div>
+          <div class="accordion-body">
+            <p>Автоматическая проверка подскажет, где именно неточность. Отправка блокируется до полного исправления.</p>
+          </div>
         </div>
-        <div class="faq-item fade-in delay-2">
-          <div class="faq-question">Подходит ли для больших групп? <span class="faq-toggle">▼</span></div>
-          <div class="faq-answer"><p>Да. Платформа оптимизирована под сотни заявок одновременно.</p></div>
+
+        <div class="accordion-item fade-in delay-2">
+          <div class="accordion-header">
+            <div class="accordion-title">
+              <h3>Подходит ли для больших групп?</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
+          </div>
+          <div class="accordion-body">
+            <p>Да, платформа оптимизирована для обработки сотен заявок одновременно без потери производительности.</p>
+          </div>
         </div>
-        <div class="faq-item fade-in delay-3">
-          <div class="faq-question">Сколько стоит и как начать? <span class="faq-toggle">▼</span></div>
-          <div class="faq-answer"><p>Зависит от объёма. Оставьте заявку ниже — покажем демо и предложим тариф.</p></div>
+
+        <div class="accordion-item fade-in delay-3">
+          <div class="accordion-header">
+            <div class="accordion-title">
+              <h3>Сколько стоит и как начать?</h3>
+            </div>
+            <span class="accordion-toggle">▼</span>
+          </div>
+          <div class="accordion-body">
+            <p>Стоимость зависит от объёма. Оставьте заявку ниже — мы покажем демо и предложим оптимальный тариф.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="cta-strip">
+  <section class="cta-section">
     <div class="container">
-      <h2 class="fade-in">Готовы сократить подачу виз с часов до минут?</h2>
-      <p class="fade-in delay-1">Загрузите паспорта → нажмите кнопку — остальное система сделает сама.</p>
-      <a href="#form" class="btn btn-secondary fade-in delay-2 btn-pro" style="border-color:#fff;color:#fff;">
-        Запросить демо сегодня
-        <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </a>
+      <div class="cta-content">
+        <h2 class="fade-in">Готовы сократить подачу виз с часов до минут?</h2>
+        <p class="fade-in delay-1">Загрузите паспорта → нажмите кнопку — остальное система сделает сама</p>
+        <a href="#form" class="btn btn-secondary fade-in delay-2">
+          Запросить демо сегодня
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M13 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
     </div>
   </section>
 
-  <!-- Form -->
   <section id="form" class="form-section">
     <div class="container">
       <div class="form-container fade-in">
-        <h3 class="form-title">Запросите демонстрацию платформы</h3>
-        <form id="demo-form">
+        <h3>Запросите демонстрацию платформы</h3>
+        <form id="demoForm">
           <div class="form-group">
             <label for="company" class="form-label">Название компании</label>
             <input type="text" id="company" class="form-control" required>
@@ -646,237 +1788,214 @@
             <label for="city" class="form-label">Город/Страна</label>
             <input type="text" id="city" class="form-control" required>
           </div>
-          <button type="submit" class="form-submit">Отправить</button>
+          <button type="submit" class="form-submit">Отправить заявку</button>
         </form>
-        <div class="form-success">
-          <h3>Спасибо!</h3>
-          <p>Мы свяжемся с вами в ближайшее время.</p>
+        <div class="form-success" id="formSuccess">
+          <h3>Спасибо за заявку!</h3>
+          <p>Мы свяжемся с вами в ближайшее время</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="footer">
+  <footer>
     <div class="container">
-      <div class="footer-grid">
-        <!-- left: brand -->
+      <div class="footer-content">
         <div>
-          <div class="f-brand">
-            <span class="f-logo" aria-hidden="true">
-              <img src="images/logo.png" alt="">
-            </span>
-            <div>
-              <div class="f-title">aiVisa</div>
-              <p class="f-desc">№1 платформа автоматизации подачи виз для хадж и умра компаний.
-                Быстро. Надёжно. Масштабируемо.</p>
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="images/logo.png" alt="aiVisa">
+            </div>
+            <div class="footer-info">
+              <h3>aiVisa</h3>
+              <p>№1 платформа автоматизации подачи виз для хадж и умра компаний. Быстро. Надёжно. Масштабируемо.</p>
             </div>
           </div>
         </div>
-  
-        <!-- right: contacts -->
-        <div>
-          <div class="f-head">Контакты</div>
-          <nav class="f-list" aria-label="Социальные и контактные ссылки">
-            <!-- Telegram -->
-            <a class="f-item" href="https://t.me/Shyn_uu" target="_blank" rel="noopener" aria-label="Telegram @Shyn_uu">
-              <svg class="f-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M9.2 15.1l-.1 4.1c.2 0 .3-.1.4-.2l1.9-1.8 3.9 2.9c.7.4 1.2.2 1.4-.7l2.6-12.2c.3-1.2-.4-1.7-1.1-1.4L3.7 9.7c-1.2.5-1.2 1.1-.2 1.4l4 1.2 9.2-5.8c.4-.3.8-.1.5.1l-7 6.4z" fill="currentColor"/>
-              </svg>
-              @Shyn_uu
-            </a>
-  
-            <!-- WhatsApp -->
-            <a class="f-item" href="https://wa.me/77479894879" target="_blank" rel="noopener" aria-label="WhatsApp +7 747 989 48 79">
-              <svg class="f-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M20.5 3.5A12 12 0 0012 0 12 12 0 000 12a11.7 11.7 0 001.6 6L0 24l6.2-1.6A12 12 0 0012 24c6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.5-8.5zM12 21.3a9.3 9.3 0 01-4.7-1.3l-.3-.2-3.7 1 .9-3.6-.2-.3A9.3 9.3 0 1121.3 12 9.3 9.3 0 0112 21.3zm5.3-6.9c-.3-.1-1.7-.8-2-.9-.2-.1-.4-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.5-.9-.8-1.5-1.7-1.6-2 0-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.1c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 .9-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.1-1.4 0-.1-.2-.2-.5-.3z" fill="currentColor"/>
-              </svg>
-              +7&nbsp;747&nbsp;989&nbsp;48&nbsp;79
-            </a>
-  
-            <!-- Instagram -->
-            <a class="f-item" href="https://instagram.com/ai_man.kz" target="_blank" rel="noopener" aria-label="Instagram @ai_man.kz">
-              <svg class="f-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7z" fill="currentColor"/>
-                <path d="M12 7a5 5 0 110 10 5 5 0 010-10zm0 2.2A2.8 2.8 0 1014.8 12 2.8 2.8 0 0012 9.2zM17.5 6.5a1 1 0 110 2 1 1 0 010-2z" fill="currentColor"/>
-              </svg>
-              @ai_man.kz
-            </a>
-  
-            <!-- Email (опционально, уже есть выше на странице) -->
-            <a class="f-item" href="mailto:shyndev001@gmail.com" aria-label="Email shyndev001@gmail.com">
-              <svg class="f-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/>
-              </svg>
-              shyndev001@gmail.com
-            </a>
-          </nav>
+
+        <div class="footer-links">
+          <h4>Контакты</h4>
+          <ul>
+            <li>
+              <a href="https://t.me/Shyn_uu" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                </svg>
+                @Shyn_uu
+              </a>
+            </li>
+            <li>
+              <a href="https://wa.me/77479894879" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+                +7 747 989 48 79
+              </a>
+            </li>
+            <li>
+              <a href="https://instagram.com/ai_man.kz" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                @ai_man.kz
+              </a>
+            </li>
+            <li>
+              <a href="mailto:shyndev001@gmail.com">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                shyndev001@gmail.com
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
-  
-      <div  class="f-bottom">
-        <div style="text-align: center;">© aiVisa, <span id="current-year"></span></div>
+
+      <div class="footer-bottom">
+        <div>&copy; <span id="currentYear"></span> aiVisa. Все права защищены</div>
+        <div class="footer-legal">
+          <a href="#">Политика конфиденциальности</a>
+          <a href="#">Публичная оферта</a>
+        </div>
       </div>
     </div>
   </footer>
 
-  <!-- WhatsApp Floating Button -->
-  <a href="https://wa.me/77479894879?text=%D0%A1%D3%99%D0%BB%D0%B5%D0%BC%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B4%D0%B5%D0%BC%D0%BE%20aiVisa."
-     class="whatsapp-float" target="_blank" rel="noopener" aria-label="Написать в WhatsApp" title="Написать в WhatsApp">
-    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <path fill="#FFFFFF" d="M24 6c-9.94 0-18 7.46-18 16.67 0 3.19 1 6.18 2.78 8.72L7 41l9.26-2.71A18.9 18.9 0 0 0 24 39.33c9.94 0 18-7.46 18-16.66S33.94 6 24 6z"/>
-      <path fill="#25D366" d="M24 9.5c-8.1 0-14.67 6.07-14.67 13.57 0 2.8.93 5.43 2.59 7.63l.47.62-1.3 4.45 4.57-1.34.6.36A15.1 15.1 0 0 0 24 36.17c8.1 0 14.67-6.08 14.67-13.58S32.1 9.5 24 9.5z"/>
-      <path fill="#FFFFFF" d="M31.7 30.6c-.6.77-1.6 1.66-2.65 1.8-1.12.15-2.56-.13-4.25-.8-2.34-.93-4.9-3.01-6.74-5.1-1.85-2.1-3.2-4.58-3.5-6.52-.19-1.21.09-2.3.73-3.21.44-.62 1.13-1.34 1.77-1.7.42-.24.93-.17 1.26.17l2.02 2.06c.4.41.49 1.04.22 1.55l-.69 1.32c-.18.34-.16.76.05 1.22.39.85 1.23 2.01 2.2 2.99.97.98 2.14 1.84 2.98 2.23.45.2.86.22 1.21.04l1.36-.69c.51-.26 1.14-.17 1.55.23l2.03 2.02c.33.33.4.84.17 1.25z"/>
+  <a href="https://wa.me/77479894879?text=Здравствуйте!%20Хочу%20демо%20aiVisa." class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp">
+    <svg viewBox="0 0 24 24" fill="white">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
     </svg>
   </a>
 
   <script>
-    // current year
-    document.getElementById('current-year').textContent = new Date().getFullYear();
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const header = document.getElementById('header');
 
-    // burger menu (mobile)
-    const menuBtn = document.getElementById('menuBtn');
-    const mobilePanel = document.getElementById('navMenuMobile');
-    menuBtn.addEventListener('click', () => {
-      menuBtn.classList.toggle('active');
-      mobilePanel.classList.toggle('active');
-      const opened = mobilePanel.classList.contains('active');
-      mobilePanel.setAttribute('aria-hidden', String(!opened));
-    });
-
-    // close mobile panel on anchor click + smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a=>{
-      a.addEventListener('click', e=>{
-        if(a.getAttribute('href')==='#') return;
-        e.preventDefault();
-        const target = document.querySelector(a.getAttribute('href'));
-        if(!target) return;
-        mobilePanel.classList.remove('active');
-        menuBtn.classList.remove('active');
-        window.scrollTo({top: target.offsetTop - 80, behavior:'smooth'});
-      });
-    });
-
-    // header shadow
-    window.addEventListener('scroll', ()=>{
-      const header = document.querySelector('header');
-      header.style.boxShadow = window.scrollY > 50 ? '0 2px 20px rgba(0,0,0,.1)' : '0 2px 20px rgba(0,0,0,.05)';
-    });
-
-    // FAQ accordion
-    const faqItems = document.querySelectorAll('.faq-item');
-    faqItems.forEach(item=>{
-      item.querySelector('.faq-question').addEventListener('click', ()=>{
-        faqItems.forEach(o=>{ if(o!==item) o.classList.remove('active'); });
-        item.classList.toggle('active');
-      });
-    });
-
-    // Generic accordions (Benefits & Security) — for all viewports
-    function setupAccordions(scope){
-      const groups = document.querySelectorAll(scope);
-      groups.forEach(group=>{
-        const cards = group.querySelectorAll('[data-acc]');
-        cards.forEach(card=>{
-          const header = card.querySelector('.acc-header');
-          if(!header) return;
-          header.setAttribute('tabindex','0');
-          header.addEventListener('click', toggle);
-          header.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggle.call(header); }});
-          function toggle(){
-            const isOpen = card.classList.contains('active');
-            cards.forEach(c=>{
-              if(c!==card){ c.classList.remove('active'); c.querySelector('.acc-header')?.setAttribute('aria-expanded','false'); }
-            });
-            card.classList.toggle('active', !isOpen);
-            header.setAttribute('aria-expanded', String(!isOpen));
-          }
-        });
-      });
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+      html.setAttribute('data-theme', theme);
+      updateThemeIcon(theme);
     }
-    setupAccordions('#benefits .benefits-grid');
-    setupAccordions('#security .security-points');
 
+    function updateThemeIcon(theme) {
+      themeIcon.textContent = theme === 'light' ? '🌞' : '🌙';
+    }
 
-    // Clients marquee sizing
-    (function (){
-      const wrap = document.querySelector('.logos-wrap');
-      const track = document.getElementById('logosTrack');
-      if(!wrap || !track) return;
-      const originalHTML = track.innerHTML;
-
-      function waitImages(){
-        const imgs = Array.from(track.querySelectorAll('img'));
-        return Promise.all(imgs.map(img=>{
-          if(img.complete && img.naturalWidth) return Promise.resolve();
-          return new Promise(res=>img.addEventListener('load', res, {once:true}));
-        }));
-      }
-      function setAnimation(){
-        const half = track.scrollWidth / 2;
-        track.style.setProperty('--marquee-distance', half + 'px');
-        const duration = Math.max(12, Math.round(half / 80));
-        track.style.setProperty('--marquee-duration', duration + 's');
-      }
-      async function build(){
-        track.innerHTML = originalHTML;
-        await waitImages();
-        track.innerHTML = originalHTML + originalHTML;
-        setAnimation();
-      }
-      let rid;
-      window.addEventListener('resize', ()=>{cancelAnimationFrame(rid); rid=requestAnimationFrame(build);});
-      wrap.addEventListener('mouseleave', ()=>track.style.animationPlayState='running');
-      build();
-    })();
-
-    // Ripple-эффект для .btn-pro и белой кнопки в CTA
-    document.querySelectorAll('.btn-pro, .cta-strip .btn-secondary').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const r = document.createElement('span');
-        r.className = 'ripple';
-        const rect = btn.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height);
-        r.style.width = r.style.height = size + 'px';
-        r.style.left = (e.clientX - rect.left - size/2) + 'px';
-        r.style.top  = (e.clientY - rect.top  - size/2) + 'px';
-        btn.appendChild(r);
-        setTimeout(()=>r.remove(), 650);
-      }, {passive:true});
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
     });
 
+    mobileMenuToggle.addEventListener('click', () => {
+      mobileMenuToggle.classList.toggle('active');
+      mobileMenu.classList.toggle('active');
+    });
 
-    // form submit → WhatsApp
-const form = document.getElementById('demo-form');
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', (e) => {
+        if (anchor.getAttribute('href') === '#') return;
+        e.preventDefault();
+        const target = document.querySelector(anchor.getAttribute('href'));
+        if (target) {
+          const headerHeight = header.offsetHeight;
+          const targetPosition = target.offsetTop - headerHeight;
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+          });
+          mobileMenu.classList.remove('active');
+          mobileMenuToggle.classList.remove('active');
+        }
+      });
+    });
 
-  const company = document.getElementById('company').value.trim();
-  const phone   = document.getElementById('phone').value.trim();
-  const city    = document.getElementById('city').value.trim();
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
 
-  if (!company || !phone || !city) {
-    alert('Пожалуйста, заполните все поля.');
-    return;
-  }
+    document.querySelectorAll('.benefit-card').forEach(card => {
+      card.querySelector('.benefit-header').addEventListener('click', () => {
+        const isActive = card.classList.contains('active');
+        document.querySelectorAll('.benefit-card').forEach(c => c.classList.remove('active'));
+        if (!isActive) {
+          card.classList.add('active');
+        }
+      });
+    });
 
-  // Текст сообщения в WhatsApp
-  const msg = [
-    'Здравствуйте! Хочу демо платформы aiVisa.',
-    `Компания: ${company}`,
-    `Телефон (WhatsApp): ${phone}`,
-    `Город/Страна: ${city}`,
-    `Источник: ${location.hostname}`
-  ].join('\n');
+    document.querySelectorAll('.accordion-item').forEach(item => {
+      item.querySelector('.accordion-header').addEventListener('click', () => {
+        const isActive = item.classList.contains('active');
+        const parent = item.parentElement;
+        parent.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+        if (!isActive) {
+          item.classList.add('active');
+        }
+      });
+    });
 
-  // Номер менеджера без "+" и пробелов
-  const waNumber = '77479894879';
-  const waURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+    const demoForm = document.getElementById('demoForm');
+    const formSuccess = document.getElementById('formSuccess');
 
-  // Открыть в новой вкладке; если блокируется — делаем redirect текущего окна
-  const win = window.open(waURL, '_blank');
-  if (!win) location.href = waURL;
-});
+    demoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const company = document.getElementById('company').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const city = document.getElementById('city').value.trim();
+
+      if (!company || !phone || !city) {
+        alert('Пожалуйста, заполните все поля');
+        return;
+      }
+
+      const message = `Здравствуйте! Хочу демо платформы aiVisa.\n\nКомпания: ${company}\nТелефон: ${phone}\nГород/Страна: ${city}\nИсточник: ${location.hostname}`;
+      const whatsappUrl = `https://wa.me/77479894879?text=${encodeURIComponent(message)}`;
+
+      const win = window.open(whatsappUrl, '_blank');
+      if (!win) {
+        location.href = whatsappUrl;
+      }
+
+      demoForm.style.display = 'none';
+      formSuccess.style.display = 'block';
+    });
+
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    initTheme();
+
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
   </script>
 </body>
 </html>
